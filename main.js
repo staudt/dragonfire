@@ -6,35 +6,46 @@
 	var GameObject = com.dgsprb.quick.GameObject;
 	var Scene = com.dgsprb.quick.Scene;
 
+	var player;
 	var score = 0;
 	var lives = 3;
 
 	function main() {
 		Quick.setName("Dragonfire");
 		Quick.setNumberOfLayers(2);
-		Quick.init(function () { return new GameScene() });
+		Quick.init(function () { return new BridgeScene() });
 	}
 
-	var GameScene = (function () {
+	var BridgeScene = (function () {
 
-		function GameScene() {
+		function BridgeScene() {
 			Scene.call(this);
-			var background = new Background();
+			this.completed = false;
+			var background = new BridgeBackground();
 			this.add(background);
 			this.add(new Bridge());
 			this.add(new River());
 			this.add(new Tower(true));
 			this.add(new Tower(false));
-			var player = new Player();
+			player = new BridgePlayer();
 			this.add(player);
 			this.createFlames();
-		}; GameScene.prototype = Object.create(Scene.prototype);
+		}; BridgeScene.prototype = Object.create(Scene.prototype);
 
-		GameScene.prototype.getNext = function () {
-			return new GameScene();
+		BridgeScene.prototype.getNext = function () {
+			if (this.completed) {
+				return new CastleScene();
+			} else {
+				return new BridgeScene();
+			}
 		}
 
-		GameScene.prototype.createFlames = function() {
+		BridgeScene.prototype.success = function () {
+			this.completed = true;
+			this.expire();
+		}
+
+		BridgeScene.prototype.createFlames = function() {
 			var speed1 = 6 + Quick.random(5) + score;
 			var speed2 = 6 + Quick.random(5) + score;
 			while (Math.abs(speed1-speed2)<3) {
@@ -47,25 +58,83 @@
 			this.activeFlames=2; //*(score+1);
 		}
 
-		GameScene.prototype.flameDied = function(isTop) {
+		BridgeScene.prototype.flameDied = function(isTop) {
 			this.activeFlames--;
 			if (this.activeFlames<=0) {
 				this.createFlames();
 			}
 		}
 
-		return GameScene;
+		return BridgeScene;
 	})();
 
-	var Background = (function () {
+	var BridgePlayer = (function () {
+		
+		var SPEED = 9;
+		
+		function BridgePlayer() {
+			GameObject.call(this);
+			this.controller = Quick.getController();
+			this.setColor("White");
+			this.jumping = false;
+			this.setSize(8, 22);
+			this.setSolid();
+			this.setPosition(Quick.getCanvasWidth()-this.getWidth()-70, Quick.getCanvasHeight()/3*2-20);
+			this.setBoundary(Quick.getBoundary());
+			this.setAccelerationY(2);
+		}; BridgePlayer.prototype = Object.create(GameObject.prototype);
 
-		function Background() {
+		BridgePlayer.prototype.update = function () {
+			if (this.controller.keyDown(CommandEnum.DOWN)) {
+				var feetY = this.getBottom();
+				this.setHeight(10);
+				this.setBottom(feetY);
+			} else {
+				var feetY = this.getBottom();
+				this.setHeight(20);
+				this.setBottom(feetY);
+
+				if (this.controller.keyDown(CommandEnum.LEFT) && this.getLeft() > 0) {
+					this.moveX(-SPEED);
+				} else if (this.controller.keyDown(CommandEnum.RIGHT) && this.getRight() < Quick.getCanvasWidth()) {
+					this.moveX(SPEED);
+				}
+			}
+			if (this.controller.keyPush(CommandEnum.A) && !this.jumping) {
+				this.setSpeedY(-10);
+				this.jumping = true;
+			}
+		};
+
+		BridgePlayer.prototype.onCollision = function(obj) {
+			if(obj.hasTag("fire")) {
+				this.getScene().expire();
+				lives--;
+			} else if (obj.hasTag("LeftTower")) {
+				this.getScene().success();
+			} else if (obj.hasTag("Bridge")) {
+				this.stop();
+				this.setBottom(obj.getTop());
+				this.jumping = false;
+			}
+		};
+
+		BridgePlayer.prototype.offBoundary = function(rct) {
+			this.stop();
+		};
+
+		return BridgePlayer;
+	})();
+
+	var BridgeBackground = (function () {
+
+		function BridgeBackground() {
 			GameObject.call(this);
 			this.setColor("Purple");
 			this.setSize(Quick.getCanvasWidth(), Quick.getCanvasHeight());
-		}; Background.prototype = Object.create(GameObject.prototype);
+		}; BridgeBackground.prototype = Object.create(GameObject.prototype);
 
-		return Background;
+		return BridgeBackground;
 	})();
 
 	var Bridge = (function () {
@@ -123,65 +192,6 @@
 		return Tower;
 	})();
 
-	var Player = (function () {
-		
-		var SPEED = 9;
-		
-		function Player() {
-			GameObject.call(this);
-			this.controller = Quick.getController();
-			this.setColor("White");
-			this.jumping = false;
-			this.setSize(8, 20);
-			this.setSolid();
-			this.setPosition(Quick.getCanvasWidth()-this.getWidth()-70, Quick.getCanvasHeight()/3*2-20);
-			this.setBoundary(Quick.getBoundary());
-			this.setAccelerationY(2);
-		}; Player.prototype = Object.create(GameObject.prototype);
-
-		Player.prototype.update = function () {
-			if (this.controller.keyDown(CommandEnum.DOWN)) {
-				var feetY = this.getBottom();
-				this.setHeight(10);
-				this.setBottom(feetY);
-			} else {
-				var feetY = this.getBottom();
-				this.setHeight(20);
-				this.setBottom(feetY);
-
-				if (this.controller.keyDown(CommandEnum.LEFT) && this.getLeft() > 0) {
-					this.moveX(-SPEED);
-				} else if (this.controller.keyDown(CommandEnum.RIGHT) && this.getRight() < Quick.getCanvasWidth()) {
-					this.moveX(SPEED);
-				}
-			}
-			if (this.controller.keyPush(CommandEnum.A) && !this.jumping) {
-				this.setSpeedY(-10);
-				this.jumping = true;
-			}
-		};
-
-		Player.prototype.onCollision = function(obj) {
-			if(obj.hasTag("fire")) {
-				this.getScene().expire();
-				lives--;
-			} else if (obj.hasTag("LeftTower")) {
-				score++;
-				this.getScene().expire();
-			} else if (obj.hasTag("Bridge")) {
-				this.stop();
-				this.setBottom(obj.getTop());
-				this.jumping = false;
-			}
-		};
-
-		Player.prototype.offBoundary = function(rct) {
-			this.stop();
-		};
-
-		return Player;
-	})();
-
 	var Flame = (function () {
 
 		function Flame(isTop, speed) {
@@ -207,6 +217,178 @@
 		return Flame;
 	})();
 
-	main();
 
+/*
+================================================================
+=== Castle =====================================================
+================================================================
+*/
+	var CastleScene = (function () {
+
+		function CastleScene() {
+			Scene.call(this);
+			this.completed = false;
+			this.lootItems = 8;
+			var background = new CastleBackground();
+			this.add(background);
+			player = new CastlePlayer();
+			this.add(player);
+			this.add(new CastleDragon());
+			this.add(new EntranceGate());
+			for(var i=0; i<this.lootItems;i++) {
+				this.add(new Loot());
+			}
+		}; CastleScene.prototype = Object.create(Scene.prototype);
+
+		CastleScene.prototype.getNext = function () {
+			if (this.completed) {
+				return new BridgeScene();
+			} else {
+				return new CastleScene();
+			}
+		}
+
+		CastleScene.prototype.success = function () {
+			this.completed = true;
+			score++;
+			this.expire();
+		}
+
+		CastleScene.prototype.caughtLoot = function () {
+			this.lootItems--;
+			if (this.lootItems<=0) {
+				this.add(new ExitGate());
+			}
+		}
+
+		return CastleScene;
+	})();
+
+	var CastlePlayer = (function () {
+		
+		var SPEED = 13;
+		
+		function CastlePlayer() {
+			GameObject.call(this);
+			this.controller = Quick.getController();
+			this.setColor("White");
+			this.setSize(8, 20);
+			this.setSolid();
+			this.setPosition(Quick.getCanvasWidth()-this.getWidth()-70, Quick.getCanvasHeight()/3*2-20);
+			this.setBoundary(Quick.getBoundary());
+		}; CastlePlayer.prototype = Object.create(GameObject.prototype);
+
+		CastlePlayer.prototype.update = function () {
+			if (this.controller.keyDown(CommandEnum.LEFT) && this.getLeft() > 0) {
+				this.moveX(-SPEED);
+			} else if (this.controller.keyDown(CommandEnum.RIGHT) && this.getRight() < Quick.getCanvasWidth()) {
+				this.moveX(SPEED);
+			}
+
+			if (this.controller.keyDown(CommandEnum.UP) && this.getTop() > 0) {
+				this.moveY(-SPEED);
+			} else if (this.controller.keyDown(CommandEnum.DOWN) && this.getBottom() < Quick.getCanvasHeight()) {
+				this.moveY(SPEED);
+			}
+		};
+
+		CastlePlayer.prototype.onCollision = function(obj) {
+			if (obj.hasTag("Loot")) {
+				obj.expire();
+				this.getScene().caughtLoot();
+			}
+			if (obj.hasTag("ExitGate")) {
+				this.getScene().success();
+			}
+		};
+
+		CastlePlayer.prototype.offBoundary = function(rct) {
+			this.stop();
+		};
+
+		return CastlePlayer;
+	})();
+
+	var CastleDragon = (function () {
+		
+		var SPEED = 4;
+		
+		function CastleDragon() {
+			GameObject.call(this);
+			this.controller = Quick.getController();
+			this.setColor("White");
+			this.setSize(130, 46);
+			this.setPosition(60, Quick.getCanvasHeight()-60);
+		}; CastleDragon.prototype = Object.create(GameObject.prototype);
+
+		CastleDragon.prototype.update = function () {
+			if (player.getCenterX() > this.getCenterX()) {
+				this.moveX(SPEED + score);
+			} else {
+				this.moveX(-SPEED - score);
+			}
+		};
+
+		CastleDragon.prototype.offBoundary = function(rct) {
+		};
+
+		return CastleDragon;
+	})();
+
+	var CastleBackground = (function () {
+
+		function CastleBackground() {
+			GameObject.call(this);
+			this.setColor("Black");
+			this.setSize(Quick.getCanvasWidth(), Quick.getCanvasHeight());
+		}; CastleBackground.prototype = Object.create(GameObject.prototype);
+
+		return CastleBackground;
+	})();
+
+	var EntranceGate = (function () {
+
+		function EntranceGate() {
+			GameObject.call(this);
+			this.setColor("Orange");
+			this.setSize(40, 50);
+			this.setPosition(Quick.getCanvasWidth()-60, Quick.getCanvasHeight()-180);
+			this.setSolid();
+		}; EntranceGate.prototype = Object.create(GameObject.prototype);
+
+		return EntranceGate;
+	})();
+
+	var ExitGate = (function () {
+
+		function ExitGate() {
+			GameObject.call(this);
+			this.addTag("ExitGate")
+			this.setColor("Orange");
+			this.setSize(40, 50);
+			this.setPosition(40, 40);
+			this.setSolid();
+		}; ExitGate.prototype = Object.create(GameObject.prototype);
+
+		return ExitGate;
+	})();
+
+	var Loot = (function () {
+
+		function Loot() {
+			GameObject.call(this);
+			this.addTag("Loot");
+			this.setColor("Yellow");
+			this.setSize(20, 20);
+			this.setPosition(
+				50 + Quick.random(Quick.getCanvasWidth()-100),
+				60 + Quick.random(Quick.getCanvasHeight()-160)
+			);
+			this.setSolid();
+		}; Loot.prototype = Object.create(GameObject.prototype);
+
+		return Loot;
+	})();
+
+	main();
 })();
