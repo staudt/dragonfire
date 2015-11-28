@@ -8,7 +8,7 @@
 
 	var player;
 	var score = 0;
-	var lives = 3;
+	var lifes = 3;
 
 	function main() {
 		Quick.setName("Dragonfire");
@@ -109,7 +109,7 @@
 		BridgePlayer.prototype.onCollision = function(obj) {
 			if(obj.hasTag("fire")) {
 				this.getScene().expire();
-				lives--;
+				lifes--;
 			} else if (obj.hasTag("LeftTower")) {
 				this.getScene().success();
 			} else if (obj.hasTag("Bridge")) {
@@ -198,7 +198,7 @@
 			GameObject.call(this);
 			this.isTop = isTop;
 			this.setColor("Red");
-			this.setSize(14, 6);
+			this.setSize(14, 8);
 			this.setPosition(
 				-Quick.random(90), 
 				Quick.getCanvasHeight()/3*2-(isTop ? 22 : 10));
@@ -271,14 +271,25 @@
 		function CastlePlayer() {
 			GameObject.call(this);
 			this.controller = Quick.getController();
+			this.hidden = false;
 			this.setColor("White");
 			this.setSize(8, 20);
 			this.setSolid();
-			this.setPosition(Quick.getCanvasWidth()-this.getWidth()-70, Quick.getCanvasHeight()/3*2-20);
+			this.startX = Quick.getCanvasWidth()-this.getWidth()-70;
+			this.startY = Quick.getCanvasHeight()/3*2-20;
+			this.setPosition(this.startX, this.startY);
 			this.setBoundary(Quick.getBoundary());
 		}; CastlePlayer.prototype = Object.create(GameObject.prototype);
 
 		CastlePlayer.prototype.update = function () {
+			if (this.hidden) {
+				if (this.controller.keyDown(CommandEnum.LEFT) && this.getLeft() > 0) {
+					this.setVisible(true);
+					this.hidden = false;
+					this.setPosition(this.startX, this.startY);
+				}
+			}
+
 			if (this.controller.keyDown(CommandEnum.LEFT) && this.getLeft() > 0) {
 				this.moveX(-SPEED);
 			} else if (this.controller.keyDown(CommandEnum.RIGHT) && this.getRight() < Quick.getCanvasWidth()) {
@@ -293,12 +304,21 @@
 		};
 
 		CastlePlayer.prototype.onCollision = function(obj) {
+			if (obj.hasTag("Hot")) {
+				lifes--;
+				this.setVisible(false);
+				this.hidden = true;
+			}
 			if (obj.hasTag("Loot")) {
 				obj.expire();
 				this.getScene().caughtLoot();
 			}
 			if (obj.hasTag("ExitGate")) {
 				this.getScene().success();
+			}
+			if (obj.hasTag("EntranceGate")) {
+				this.hidden = true;
+				this.setVisible(false);
 			}
 		};
 
@@ -310,29 +330,59 @@
 	})();
 
 	var CastleDragon = (function () {
-		
 		var SPEED = 4;
 		
 		function CastleDragon() {
 			GameObject.call(this);
-			this.controller = Quick.getController();
+			this.addTag("Hot");
+			this.turnedLeft = false;
 			this.setColor("White");
 			this.setSize(130, 46);
 			this.setPosition(60, Quick.getCanvasHeight()-60);
+			this.setSolid();
 		}; CastleDragon.prototype = Object.create(GameObject.prototype);
 
 		CastleDragon.prototype.update = function () {
-			if (player.getCenterX() > this.getCenterX()) {
+			if (player.getCenterX() > this.getRight()) {
 				this.moveX(SPEED + score);
+				this.turnedLeft = false;
 			} else {
 				this.moveX(-SPEED - score);
+				this.turnedLeft = true;
+			}
+
+			if (Quick.random(100+(score*5))>95) {
+				this.getScene().add(
+					new DragonFireball(
+						this.turnedLeft ? this.getLeft() : this.getRight(),
+						this.getCenterY()
+					)
+				);
 			}
 		};
 
-		CastleDragon.prototype.offBoundary = function(rct) {
+		return CastleDragon;
+	})();
+
+	var DragonFireball = (function () {
+		
+		function DragonFireball(x, y) {
+			GameObject.call(this);
+			this.addTag("Hot");
+			this.controller = Quick.getController();
+			this.setColor("Red");
+			this.setSize(20, 20);
+			this.setPosition(x, y);
+			this.setSpeedY(-6);
+			this.setBoundary(Quick.getBoundary());
+			this.setSolid();
+		}; DragonFireball.prototype = Object.create(GameObject.prototype);
+
+		DragonFireball.prototype.offBoundary = function () {
+			this.expire();
 		};
 
-		return CastleDragon;
+		return DragonFireball;
 	})();
 
 	var CastleBackground = (function () {
@@ -350,6 +400,7 @@
 
 		function EntranceGate() {
 			GameObject.call(this);
+			this.addTag("EntranceGate");
 			this.setColor("Orange");
 			this.setSize(40, 50);
 			this.setPosition(Quick.getCanvasWidth()-60, Quick.getCanvasHeight()-180);
@@ -381,7 +432,7 @@
 			this.setColor("Yellow");
 			this.setSize(20, 20);
 			this.setPosition(
-				50 + Quick.random(Quick.getCanvasWidth()-100),
+				100 + Quick.random(Quick.getCanvasWidth()-200),
 				60 + Quick.random(Quick.getCanvasHeight()-160)
 			);
 			this.setSolid();
