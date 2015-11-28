@@ -3,8 +3,10 @@
 
 	var CommandEnum = com.dgsprb.quick.CommandEnum;
 	var Quick = com.dgsprb.quick.Quick;
+	var GameObject = com.dgsprb.quick.Rect;
 	var GameObject = com.dgsprb.quick.GameObject;
 	var Scene = com.dgsprb.quick.Scene;
+	var Text = com.dgsprb.quick.Text;
 
 	var player;
 	var score = 0;
@@ -25,8 +27,16 @@
 			this.add(background);
 			this.add(new Bridge());
 			this.add(new River());
-			this.add(new Tower(true));
-			this.add(new Tower(false));
+			var towerLeft = new Tower(true);
+			this.add(towerLeft);
+			towerLeft.drawDecor();
+			var towerRight = new Tower(false);
+			this.add(towerRight);
+			towerRight.drawDecor();
+			/*var levelText = new Text("Level: " + score)
+			levelText.setCenterX(Quick.getCanvasCenterX());
+			levelText.setY(80);
+			this.add(levelText)*/
 			player = new BridgePlayer();
 			this.add(player);
 			this.createFlames();
@@ -189,6 +199,15 @@
 			this.setLayerIndex(1);
 		}; Tower.prototype = Object.create(GameObject.prototype);
 
+		Tower.prototype.drawDecor = function() {
+			var towerTop = new GameObject();
+			towerTop.setColor("Black");
+			towerTop.setSize(100);
+			towerTop.setCenterX(this.getCenterX());
+			towerTop.setBottom(this.getTop());
+			this.getScene().add(towerTop);
+		}
+
 		return Tower;
 	})();
 
@@ -233,7 +252,7 @@
 			this.add(background);
 			player = new CastlePlayer();
 			this.add(player);
-			this.add(new CastleDragon());
+			this.add(new Dragon());
 			this.add(new EntranceGate());
 			for(var i=0; i<this.lootItems;i++) {
 				this.add(new Loot());
@@ -288,37 +307,38 @@
 					this.hidden = false;
 					this.setPosition(this.startX, this.startY);
 				}
-			}
-
-			if (this.controller.keyDown(CommandEnum.LEFT) && this.getLeft() > 0) {
-				this.moveX(-SPEED);
-			} else if (this.controller.keyDown(CommandEnum.RIGHT) && this.getRight() < Quick.getCanvasWidth()) {
-				this.moveX(SPEED);
-			}
-
-			if (this.controller.keyDown(CommandEnum.UP) && this.getTop() > 0) {
-				this.moveY(-SPEED);
-			} else if (this.controller.keyDown(CommandEnum.DOWN) && this.getBottom() < Quick.getCanvasHeight()) {
-				this.moveY(SPEED);
+			} else {
+				if (this.controller.keyDown(CommandEnum.LEFT) && this.getLeft() > 0) {
+					this.moveX(-SPEED);
+				} else if (this.controller.keyDown(CommandEnum.RIGHT) && this.getRight() < Quick.getCanvasWidth()) {
+					this.moveX(SPEED);
+				}
+				if (this.controller.keyDown(CommandEnum.UP) && this.getTop() > 0) {
+					this.moveY(-SPEED);
+				} else if (this.controller.keyDown(CommandEnum.DOWN) && this.getBottom() < Quick.getCanvasHeight()) {
+					this.moveY(SPEED);
+				}
 			}
 		};
 
 		CastlePlayer.prototype.onCollision = function(obj) {
-			if (obj.hasTag("Hot")) {
-				lifes--;
-				this.setVisible(false);
-				this.hidden = true;
-			}
-			if (obj.hasTag("Loot")) {
-				obj.expire();
-				this.getScene().caughtLoot();
-			}
-			if (obj.hasTag("ExitGate")) {
-				this.getScene().success();
-			}
-			if (obj.hasTag("EntranceGate")) {
-				this.hidden = true;
-				this.setVisible(false);
+			if (!this.hidden) {
+				if (obj.hasTag("Hot")) {
+					lifes--;
+					this.setVisible(false);
+					this.hidden = true;
+				}
+				if (obj.hasTag("Loot")) {
+					obj.expire();
+					this.getScene().caughtLoot();
+				}
+				if (obj.hasTag("ExitGate")) {
+					this.getScene().success();
+				}
+				if (obj.hasTag("EntranceGate")) {
+					this.hidden = true;
+					this.setVisible(false);
+				}
 			}
 		};
 
@@ -329,39 +349,55 @@
 		return CastlePlayer;
 	})();
 
-	var CastleDragon = (function () {
+	var Dragon = (function () {
 		var SPEED = 4;
 		
-		function CastleDragon() {
+		function Dragon() {
 			GameObject.call(this);
 			this.addTag("Hot");
-			this.turnedLeft = false;
+			this.goingLeft = false;
 			this.setColor("White");
 			this.setSize(130, 46);
 			this.setPosition(60, Quick.getCanvasHeight()-60);
 			this.setSolid();
-		}; CastleDragon.prototype = Object.create(GameObject.prototype);
+		}; Dragon.prototype = Object.create(GameObject.prototype);
 
-		CastleDragon.prototype.update = function () {
-			if (player.getCenterX() > this.getRight()) {
-				this.moveX(SPEED + score);
-				this.turnedLeft = false;
-			} else {
-				this.moveX(-SPEED - score);
-				this.turnedLeft = true;
-			}
-
-			if (Quick.random(100+(score*5))>95) {
-				this.getScene().add(
-					new DragonFireball(
-						this.turnedLeft ? this.getLeft() : this.getRight(),
-						this.getCenterY()
-					)
-				);
+		Dragon.prototype.update = function () {
+			if (player.hidden) {	/* idle */
+				if (this.goingLeft) {
+					this.moveX(-SPEED - score)
+					if (this.getX() < 100) {
+						this.goingLeft = false;
+					}
+				} else {
+					this.moveX(SPEED + score)
+					if (this.getX() > Quick.getCanvasWidth()-230) {
+						this.goingLeft = true;
+					}
+				}
+			} else {	/* hunting the player */
+				if (this.getRight() < player.getCenterX()-10) {
+					this.moveX(SPEED + score);
+					this.goingLeft = false;
+				} else if (this.getRight() > player.getCenterX()+10) {
+					this.moveX(-SPEED - score);
+					this.goingLeft = true;
+				} else { /* standing still to shoot */
+					this.goingLeft = false;
+				}
+				/* Fire */
+				if (Quick.random(100+(score*5))>95) {
+					this.getScene().add(
+						new DragonFireball(
+							this.goingLeft ? this.getLeft() : this.getRight(),
+							this.getCenterY()
+						)
+					);
+				}
 			}
 		};
 
-		return CastleDragon;
+		return Dragon;
 	})();
 
 	var DragonFireball = (function () {
@@ -372,7 +408,7 @@
 			this.controller = Quick.getController();
 			this.setColor("Red");
 			this.setSize(20, 20);
-			this.setPosition(x, y);
+			this.setPosition(x+5-Quick.random(16), y);
 			this.setSpeedY(-6);
 			this.setBoundary(Quick.getBoundary());
 			this.setSolid();
