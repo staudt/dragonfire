@@ -41,6 +41,21 @@
 		new Frame(document.getElementById("dragonfire"), 2),
 		new Frame(ImageFactory.mirror(document.getElementById("dragonfire")), 2)
 	]);
+	var DRAGON_LEFT = new Animation([
+		new Frame(ImageFactory.mirror(document.getElementById("dragon1")), 5),
+		new Frame(ImageFactory.mirror(document.getElementById("dragon2")), 5)
+	]);
+	var DRAGON_RIGHT = new Animation([
+		new Frame(document.getElementById("dragon1"), 5),
+		new Frame(document.getElementById("dragon2"), 5)
+	]);
+	var DRAGON_SPIT_LEFT = new Animation([
+		new Frame(ImageFactory.mirror(document.getElementById("dragon_spit")), 2),
+	]);
+	var DRAGON_SPIT_RIGHT = new Animation([
+		new Frame(document.getElementById("dragon_spit"), 2),
+	]);
+
 	var LOOT = [
 		document.getElementById("loot1"),
 		document.getElementById("loot2"),
@@ -449,11 +464,31 @@
 			GameObject.call(this);
 			this.addTag("Hot");
 			this.goingLeft = false;
-			this.setColor("White");
-			this.setSize(130, 46);
+			this.prevLeft = true;
+			this.spitting = false;
+			this.updateAnimation();
+			this.setSize(120, 46);
 			this.setPosition(60, Quick.getCanvasHeight()-60);
 			this.setSolid();
 		}; Dragon.prototype = Object.create(GameObject.prototype);
+
+		Dragon.prototype.updateAnimation = function () {
+			if (this.prevLeft != this.goingLeft) {
+				if (this.goingLeft) {
+					this.setAnimation(DRAGON_LEFT);
+				} else {
+					this.setAnimation(DRAGON_RIGHT);			
+				}
+				this.prevLeft = this.goingLeft;
+			}
+		};
+
+		Dragon.prototype.onAnimationLoop = function () {
+			if (this.spitting) {
+				this.spitting = false;
+				this.updateAnimation();
+			}
+		};
 
 		Dragon.prototype.update = function () {
 			if (player.hidden) {	/* idle */
@@ -461,14 +496,16 @@
 					this.moveX(-SPEED - score)
 					if (this.getX() < 100) {
 						this.goingLeft = false;
+						this.updateAnimation();
 					}
 				} else {
 					this.moveX(SPEED + score)
 					if (this.getX() > Quick.getCanvasWidth()-230) {
 						this.goingLeft = true;
+						this.updateAnimation();
 					}
 				}
-			} else {	/* hunting the player */
+			} else {	/* after the player */
 				if (this.getRight() < player.getCenterX()-10) {
 					this.moveX(SPEED + score);
 					this.goingLeft = false;
@@ -486,6 +523,8 @@
 							this.getCenterY()
 						)
 					);
+					this.spitting = true;
+					this.setAnimation(this.goingLeft ? DRAGON_SPIT_LEFT : DRAGON_SPIT_RIGHT);
 				}
 			}
 		};
@@ -530,8 +569,8 @@
 		function EntranceGate() {
 			GameObject.call(this);
 			this.addTag("EntranceGate");
-			this.setColor("Orange");
-			this.setSize(40, 50);
+			this.setImage(document.getElementById("door"));
+			this.setSize(40, 45);
 			this.setPosition(Quick.getCanvasWidth()-60, Quick.getCanvasHeight()-180);
 			this.setSolid();
 		}; EntranceGate.prototype = Object.create(GameObject.prototype);
@@ -544,8 +583,8 @@
 		function ExitGate() {
 			GameObject.call(this);
 			this.addTag("ExitGate")
-			this.setColor("Orange");
-			this.setSize(40, 50);
+			this.setImage(document.getElementById("door"));
+			this.setSize(40, 45);
 			this.setPosition(40, 40);
 			this.setSolid();
 		}; ExitGate.prototype = Object.create(GameObject.prototype);
