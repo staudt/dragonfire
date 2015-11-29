@@ -33,6 +33,14 @@
 		new Frame(ImageFactory.mirror(document.getElementById("player_running3")), 2),
 		new Frame(ImageFactory.mirror(document.getElementById("player_running4")), 2)
 	]);
+	var FLAME = new Animation([
+		new Frame(document.getElementById("flame"), 2),
+		new Frame(ImageFactory.flip(document.getElementById("flame")), 2)
+	]);
+	var DRAGONFIREBALL = new Animation([
+		new Frame(document.getElementById("dragonfire"), 2),
+		new Frame(ImageFactory.mirror(document.getElementById("dragonfire")), 2)
+	]);
 
 	function main() {
 		Quick.setName("Dragonfire");
@@ -103,11 +111,12 @@
 	var BridgePlayer = (function () {
 		
 		var SPEED = 9;
+		var W = 12, H = 22, H_DUCKING = 12;
 
 		function BridgePlayer() {
 			GameObject.call(this);
 			this.controller = Quick.getController();
-			this.prev_state = "";
+			this.prevState = "";
 			this.jumping = false;
 			this.turnedLeft = true;
 			this.updateAnimation("standing");
@@ -121,23 +130,23 @@
 			if (this.jumping && (state != "ducking")) {
 				var feetY = this.getBottom();
 				this.setImage(this.turnedLeft ? AMIN_PLAYER_JUMPING_LEFT : AMIN_PLAYER_JUMPING_RIGHT);
-				this.setSize(12, 22);
-				this.prev_state = state;
-			} else if (state != this.prev_state) { /* if the state changed, update animation */
+				this.setSize(W, H);
+				this.prevState = state;
+			} else if (state != this.prevState) { /* if the state changed, update animation */
 				var feetY = this.getBottom();
 				if (state == "running") {
 					this.setAnimation(this.turnedLeft ? ANIM_PLAYER_RUNNING_LEFT : ANIM_PLAYER_RUNNING_RIGHT);
-					this.setSize(12, 22);
+					this.setSize(W, H);
 				} else if (state == "ducking") {
 					var feetY = this.getBottom();
 					this.setImage(this.turnedLeft ? AMIN_PLAYER_DUCKING_LEFT : AMIN_PLAYER_DUCKING_RIGHT);
-					this.setSize(12, 11);
+					this.setSize(W, H_DUCKING);
 				} else {	/* just standing */
 					this.setImage(this.turnedLeft ? AMIN_PLAYER_STANDING_LEFT : AMIN_PLAYER_STANDING_RIGHT);
-					this.setSize(12, 22);
+					this.setSize(W, H);
 				}
 				this.setBottom(feetY);
-				this.prev_state = state;
+				this.prevState = state;
 			}
 		}
 
@@ -175,6 +184,7 @@
 				this.setBottom(obj.getTop());
 				if (this.jumping) {
 					this.jumping = false;
+					this.prevState = "jumping"; // quick fix :P
 					this.updateAnimation("standing");
 				}
 			}
@@ -267,7 +277,7 @@
 		function Flame(isTop, speed) {
 			GameObject.call(this);
 			this.isTop = isTop;
-			this.setColor("Red");
+			this.setAnimation(FLAME);
 			this.setSize(14, 8);
 			this.setPosition(
 				-Quick.random(90), 
@@ -337,13 +347,15 @@
 	var CastlePlayer = (function () {
 		
 		var SPEED = 13;
+		var W = 12, H = 22;
 		
 		function CastlePlayer() {
 			GameObject.call(this);
 			this.controller = Quick.getController();
 			this.hidden = false;
-			this.prev_state = "";
+			this.prevState = "";
 			this.turnedLeft = true;
+			this.prevLeft = true;
 			this.updateAnimation("standing");
 			this.setSolid();
 			this.startX = Quick.getCanvasWidth()-this.getWidth()-70;
@@ -353,18 +365,19 @@
 		}; CastlePlayer.prototype = Object.create(GameObject.prototype);
 
 		CastlePlayer.prototype.updateAnimation = function (state) {
-			if (state != this.prev_state) { /* if the state changed, update animation */
+			if (state != this.prevState || this.prevLeft != this.turnedLeft) { /* if the state changed, update animation */
 				var feetY = this.getBottom();
 				if (state == "running") {
 					this.setAnimation(this.turnedLeft ? ANIM_PLAYER_RUNNING_LEFT : ANIM_PLAYER_RUNNING_RIGHT);
-					this.setSize(12, 22);
+					this.setSize(W, H);
 				} else {	/* just standing */
 					this.setImage(this.turnedLeft ? AMIN_PLAYER_STANDING_LEFT : AMIN_PLAYER_STANDING_RIGHT);
-					this.setSize(12, 22);
+					this.setSize(W, H);
 				}
 				this.setBottom(feetY);
 			}
-			this.prev_state = state;
+			this.prevState = state;
+			this.prevLeft = this.turnedLeft;
 		}
 
 		CastlePlayer.prototype.update = function () {
@@ -481,7 +494,7 @@
 			GameObject.call(this);
 			this.addTag("Hot");
 			this.controller = Quick.getController();
-			this.setColor("Red");
+			this.setAnimation(DRAGONFIREBALL);
 			this.setSize(20, 20);
 			this.setPosition(x+5-Quick.random(16), y);
 			this.setSpeedY(-6);
