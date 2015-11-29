@@ -7,6 +7,7 @@
 	var GameObject = com.dgsprb.quick.GameObject;
 	var Scene = com.dgsprb.quick.Scene;
 	var Animation = com.dgsprb.quick.Animation;
+	var ImageFactory = com.dgsprb.quick.ImageFactory;
 	var Frame = com.dgsprb.quick.Frame;
 	var Text = com.dgsprb.quick.Text;
 
@@ -14,11 +15,21 @@
 	var score = 0;
 	var lifes = 3;
 
-	var PLAYER_RUNNING = new Animation([
-		new Frame(document.getElementById("player_running1"), 4),
-		new Frame(document.getElementById("player_running2"), 4),
-		new Frame(document.getElementById("player_running3"), 4),
-		new Frame(document.getElementById("player_running4"), 4)
+	var AMIN_PLAYER_STANDING_LEFT = document.getElementById("player_standing");
+	var AMIN_PLAYER_STANDING_RIGHT = ImageFactory.mirror(document.getElementById("player_standing"));
+	var AMIN_PLAYER_DUCKING_LEFT = document.getElementById("player_ducking");
+	var AMIN_PLAYER_DUCKING_RIGHT = ImageFactory.mirror(document.getElementById("player_ducking"));
+	var ANIM_PLAYER_RUNNING_LEFT = new Animation([
+		new Frame(document.getElementById("player_running1"), 2),
+		new Frame(document.getElementById("player_running2"), 2),
+		new Frame(document.getElementById("player_running3"), 2),
+		new Frame(document.getElementById("player_running4"), 2)
+	]);
+	var ANIM_PLAYER_RUNNING_RIGHT = new Animation([
+		new Frame(ImageFactory.mirror(document.getElementById("player_running1")), 2),
+		new Frame(ImageFactory.mirror(document.getElementById("player_running2")), 2),
+		new Frame(ImageFactory.mirror(document.getElementById("player_running3")), 2),
+		new Frame(ImageFactory.mirror(document.getElementById("player_running4")), 2)
 	]);
 
 	function main() {
@@ -94,44 +105,50 @@
 		function BridgePlayer() {
 			GameObject.call(this);
 			this.controller = Quick.getController();
-			this.setImageId("player_standing");
-			this.running = true;
+			this.prev_state = "";
 			this.jumping = false;
+			this.turnedLeft = true;
 			this.setSize(11, 22);
+			this.updateAnimation("standing");
 			this.setSolid();
 			this.setPosition(Quick.getCanvasWidth()-this.getWidth()-70, Quick.getCanvasHeight()/3*2-20);
 			this.setBoundary(Quick.getBoundary());
 			this.setAccelerationY(2);
 		}; BridgePlayer.prototype = Object.create(GameObject.prototype);
 
+		BridgePlayer.prototype.updateAnimation = function (state) {
+			if (state != this.prev_state) {
+				var feetY = this.getBottom();
+				if (state == "standing" && !this.jumping) {
+					this.setImage(this.turnedLeft ? AMIN_PLAYER_STANDING_LEFT : AMIN_PLAYER_STANDING_RIGHT);
+					this.setSize(11, 22);
+				} else if (state == "running" || (state == "standing" && this.jumping)) {
+					this.setAnimation(this.turnedLeft ? ANIM_PLAYER_RUNNING_LEFT : ANIM_PLAYER_RUNNING_RIGHT);
+					this.setSize(11, 22);
+				} else if (state == "ducking") {
+					var feetY = this.getBottom();
+					this.setImage(this.turnedLeft ? AMIN_PLAYER_DUCKING_LEFT : AMIN_PLAYER_DUCKING_RIGHT);
+					this.setSize(11, 11);
+				}
+				this.setBottom(feetY);
+				this.prev_state = state;
+			}
+		}
+
 		BridgePlayer.prototype.update = function () {
 			if (this.controller.keyDown(CommandEnum.DOWN)) {
-				this.setImageId("player_ducking");
-				this.setHeight(11);
-				var feetY = this.getBottom();
-				this.setBottom(feetY);
+				this.updateAnimation("ducking");
 			} else {
-				var already_running = this.running;
-
 				if (this.controller.keyDown(CommandEnum.LEFT) && this.getLeft() > 0) {
 					this.moveX(-SPEED);
-					this.running = true;
+					this.turnedLeft = true;
+					this.updateAnimation("running");
 				} else if (this.controller.keyDown(CommandEnum.RIGHT) && this.getRight() < Quick.getCanvasWidth()) {
 					this.moveX(SPEED);
-					this.running = true;
+					this.turnedLeft = false;
+					this.updateAnimation("running");
 				} else {
-					this.running = false;
-				}
-				if (already_running) {
-					var feetY = this.getBottom();
-					this.setHeight(22);
-					if (!this.running) this.setImageId("player_standing");
-					this.setBottom(feetY);
-				} else {
-					var feetY = this.getBottom();
-					this.setHeight(22);
-					if (this.running) this.setAnimation(PLAYER_RUNNING);
-					this.setBottom(feetY);
+					this.updateAnimation("standing");
 				}
 			}
 			if (this.controller.keyPush(CommandEnum.A) && !this.jumping) {
