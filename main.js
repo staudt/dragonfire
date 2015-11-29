@@ -6,11 +6,20 @@
 	var GameObject = com.dgsprb.quick.Rect;
 	var GameObject = com.dgsprb.quick.GameObject;
 	var Scene = com.dgsprb.quick.Scene;
+	var Animation = com.dgsprb.quick.Animation;
+	var Frame = com.dgsprb.quick.Frame;
 	var Text = com.dgsprb.quick.Text;
 
 	var player;
 	var score = 0;
 	var lifes = 3;
+
+	var PLAYER_RUNNING = new Animation([
+		new Frame(document.getElementById("player_running1"), 4),
+		new Frame(document.getElementById("player_running2"), 4),
+		new Frame(document.getElementById("player_running3"), 4),
+		new Frame(document.getElementById("player_running4"), 4)
+	]);
 
 	function main() {
 		Quick.setName("Dragonfire");
@@ -81,13 +90,14 @@
 	var BridgePlayer = (function () {
 		
 		var SPEED = 9;
-		
+
 		function BridgePlayer() {
 			GameObject.call(this);
 			this.controller = Quick.getController();
-			this.setColor("White");
+			this.setImageId("player_standing");
+			this.running = true;
 			this.jumping = false;
-			this.setSize(8, 22);
+			this.setSize(11, 22);
 			this.setSolid();
 			this.setPosition(Quick.getCanvasWidth()-this.getWidth()-70, Quick.getCanvasHeight()/3*2-20);
 			this.setBoundary(Quick.getBoundary());
@@ -96,18 +106,32 @@
 
 		BridgePlayer.prototype.update = function () {
 			if (this.controller.keyDown(CommandEnum.DOWN)) {
+				this.setImageId("player_ducking");
+				this.setHeight(11);
 				var feetY = this.getBottom();
-				this.setHeight(10);
 				this.setBottom(feetY);
 			} else {
-				var feetY = this.getBottom();
-				this.setHeight(20);
-				this.setBottom(feetY);
+				var already_running = this.running;
 
 				if (this.controller.keyDown(CommandEnum.LEFT) && this.getLeft() > 0) {
 					this.moveX(-SPEED);
+					this.running = true;
 				} else if (this.controller.keyDown(CommandEnum.RIGHT) && this.getRight() < Quick.getCanvasWidth()) {
 					this.moveX(SPEED);
+					this.running = true;
+				} else {
+					this.running = false;
+				}
+				if (already_running) {
+					var feetY = this.getBottom();
+					this.setHeight(22);
+					if (!this.running) this.setImageId("player_standing");
+					this.setBottom(feetY);
+				} else {
+					var feetY = this.getBottom();
+					this.setHeight(22);
+					if (this.running) this.setAnimation(PLAYER_RUNNING);
+					this.setBottom(feetY);
 				}
 			}
 			if (this.controller.keyPush(CommandEnum.A) && !this.jumping) {
@@ -385,7 +409,7 @@
 				} else { /* standing still to shoot */
 					this.goingLeft = false;
 				}
-				/* Fire */
+				/* Shoot Fire */
 				if (Quick.random(100+(score*5))>95) {
 					this.getScene().add(
 						new DragonFireball(
