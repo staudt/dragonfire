@@ -19,6 +19,8 @@
 	var AMIN_PLAYER_STANDING_RIGHT = ImageFactory.mirror(document.getElementById("player_standing"));
 	var AMIN_PLAYER_DUCKING_LEFT = document.getElementById("player_ducking");
 	var AMIN_PLAYER_DUCKING_RIGHT = ImageFactory.mirror(document.getElementById("player_ducking"));
+	var AMIN_PLAYER_JUMPING_LEFT = document.getElementById("player_jumping");
+	var AMIN_PLAYER_JUMPING_RIGHT = ImageFactory.mirror(document.getElementById("player_jumping"));
 	var ANIM_PLAYER_RUNNING_LEFT = new Animation([
 		new Frame(document.getElementById("player_running1"), 2),
 		new Frame(document.getElementById("player_running2"), 2),
@@ -108,7 +110,6 @@
 			this.prev_state = "";
 			this.jumping = false;
 			this.turnedLeft = true;
-			this.setSize(11, 22);
 			this.updateAnimation("standing");
 			this.setSolid();
 			this.setPosition(Quick.getCanvasWidth()-this.getWidth()-70, Quick.getCanvasHeight()/3*2-20);
@@ -117,18 +118,23 @@
 		}; BridgePlayer.prototype = Object.create(GameObject.prototype);
 
 		BridgePlayer.prototype.updateAnimation = function (state) {
-			if (state != this.prev_state) {
+			if (this.jumping && (state != "ducking")) {
 				var feetY = this.getBottom();
-				if (state == "standing" && !this.jumping) {
-					this.setImage(this.turnedLeft ? AMIN_PLAYER_STANDING_LEFT : AMIN_PLAYER_STANDING_RIGHT);
-					this.setSize(11, 22);
-				} else if (state == "running" || (state == "standing" && this.jumping)) {
+				this.setImage(this.turnedLeft ? AMIN_PLAYER_JUMPING_LEFT : AMIN_PLAYER_JUMPING_RIGHT);
+				this.setSize(12, 22);
+				this.prev_state = state;
+			} else if (state != this.prev_state) { /* if the state changed, update animation */
+				var feetY = this.getBottom();
+				if (state == "running") {
 					this.setAnimation(this.turnedLeft ? ANIM_PLAYER_RUNNING_LEFT : ANIM_PLAYER_RUNNING_RIGHT);
-					this.setSize(11, 22);
+					this.setSize(12, 22);
 				} else if (state == "ducking") {
 					var feetY = this.getBottom();
 					this.setImage(this.turnedLeft ? AMIN_PLAYER_DUCKING_LEFT : AMIN_PLAYER_DUCKING_RIGHT);
-					this.setSize(11, 11);
+					this.setSize(12, 11);
+				} else {	/* just standing */
+					this.setImage(this.turnedLeft ? AMIN_PLAYER_STANDING_LEFT : AMIN_PLAYER_STANDING_RIGHT);
+					this.setSize(12, 22);
 				}
 				this.setBottom(feetY);
 				this.prev_state = state;
@@ -154,7 +160,8 @@
 			if (this.controller.keyPush(CommandEnum.A) && !this.jumping) {
 				this.setSpeedY(-10);
 				this.jumping = true;
-			}
+				this.updateAnimation("jumping");
+			} 
 		};
 
 		BridgePlayer.prototype.onCollision = function(obj) {
@@ -166,7 +173,10 @@
 			} else if (obj.hasTag("Bridge")) {
 				this.stop();
 				this.setBottom(obj.getTop());
-				this.jumping = false;
+				if (this.jumping) {
+					this.jumping = false;
+					this.updateAnimation("standing");
+				}
 			}
 		};
 
@@ -332,14 +342,30 @@
 			GameObject.call(this);
 			this.controller = Quick.getController();
 			this.hidden = false;
-			this.setColor("White");
-			this.setSize(8, 20);
+			this.prev_state = "";
+			this.turnedLeft = true;
+			this.updateAnimation("standing");
 			this.setSolid();
 			this.startX = Quick.getCanvasWidth()-this.getWidth()-70;
 			this.startY = Quick.getCanvasHeight()/3*2-20;
 			this.setPosition(this.startX, this.startY);
 			this.setBoundary(Quick.getBoundary());
 		}; CastlePlayer.prototype = Object.create(GameObject.prototype);
+
+		CastlePlayer.prototype.updateAnimation = function (state) {
+			if (state != this.prev_state) { /* if the state changed, update animation */
+				var feetY = this.getBottom();
+				if (state == "running") {
+					this.setAnimation(this.turnedLeft ? ANIM_PLAYER_RUNNING_LEFT : ANIM_PLAYER_RUNNING_RIGHT);
+					this.setSize(12, 22);
+				} else {	/* just standing */
+					this.setImage(this.turnedLeft ? AMIN_PLAYER_STANDING_LEFT : AMIN_PLAYER_STANDING_RIGHT);
+					this.setSize(12, 22);
+				}
+				this.setBottom(feetY);
+			}
+			this.prev_state = state;
+		}
 
 		CastlePlayer.prototype.update = function () {
 			if (this.hidden) {
@@ -349,16 +375,24 @@
 					this.setPosition(this.startX, this.startY);
 				}
 			} else {
+				var moved = false;
 				if (this.controller.keyDown(CommandEnum.LEFT) && this.getLeft() > 0) {
 					this.moveX(-SPEED);
+					this.turnedLeft = true;
+					moved = true;
 				} else if (this.controller.keyDown(CommandEnum.RIGHT) && this.getRight() < Quick.getCanvasWidth()) {
 					this.moveX(SPEED);
+					this.turnedLeft = false;
+					moved = true;
 				}
 				if (this.controller.keyDown(CommandEnum.UP) && this.getTop() > 0) {
 					this.moveY(-SPEED);
+					moved = true;
 				} else if (this.controller.keyDown(CommandEnum.DOWN) && this.getBottom() < Quick.getCanvasHeight()) {
 					this.moveY(SPEED);
+					moved = true;
 				}
+				this.updateAnimation(moved ? "running" : "standing");
 			}
 		};
 
