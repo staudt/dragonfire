@@ -41,6 +41,11 @@
 		new Frame(document.getElementById("dragonfire"), 2),
 		new Frame(ImageFactory.mirror(document.getElementById("dragonfire")), 2)
 	]);
+	var LOOT = [
+		document.getElementById("loot1"),
+		document.getElementById("loot2"),
+		document.getElementById("loot3")
+	];
 
 	function main() {
 		Quick.setName("Dragonfire");
@@ -553,7 +558,7 @@
 		function Loot() {
 			GameObject.call(this);
 			this.addTag("Loot");
-			this.setColor("Yellow");
+			this.setImage(LOOT[Quick.random(2)]);
 			this.setSize(20, 20);
 			this.setPosition(
 				100 + Quick.random(Quick.getCanvasWidth()-200),
