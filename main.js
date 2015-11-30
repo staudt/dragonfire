@@ -15,52 +15,61 @@
 	var score = 0;
 	var lifes = 3;
 
-	var AMIN_PLAYER_STANDING_LEFT = document.getElementById("player_standing");
-	var AMIN_PLAYER_STANDING_RIGHT = ImageFactory.mirror(document.getElementById("player_standing"));
-	var AMIN_PLAYER_DUCKING_LEFT = document.getElementById("player_ducking");
-	var AMIN_PLAYER_DUCKING_RIGHT = ImageFactory.mirror(document.getElementById("player_ducking"));
-	var AMIN_PLAYER_JUMPING_LEFT = document.getElementById("player_jumping");
-	var AMIN_PLAYER_JUMPING_RIGHT = ImageFactory.mirror(document.getElementById("player_jumping"));
-	var ANIM_PLAYER_RUNNING_LEFT = new Animation([
-		new Frame(document.getElementById("player_running1"), 2),
-		new Frame(document.getElementById("player_running2"), 2),
-		new Frame(document.getElementById("player_running3"), 2),
-		new Frame(document.getElementById("player_running4"), 2)
-	]);
-	var ANIM_PLAYER_RUNNING_RIGHT = new Animation([
-		new Frame(ImageFactory.mirror(document.getElementById("player_running1")), 2),
-		new Frame(ImageFactory.mirror(document.getElementById("player_running2")), 2),
-		new Frame(ImageFactory.mirror(document.getElementById("player_running3")), 2),
-		new Frame(ImageFactory.mirror(document.getElementById("player_running4")), 2)
-	]);
-	var FLAME = new Animation([
-		new Frame(document.getElementById("flame"), 2),
-		new Frame(ImageFactory.flip(document.getElementById("flame")), 2)
-	]);
-	var DRAGONFIREBALL = new Animation([
-		new Frame(document.getElementById("dragonfire"), 2),
-		new Frame(ImageFactory.mirror(document.getElementById("dragonfire")), 2)
-	]);
-	var DRAGON_LEFT = new Animation([
-		new Frame(ImageFactory.mirror(document.getElementById("dragon1")), 5),
-		new Frame(ImageFactory.mirror(document.getElementById("dragon2")), 5)
-	]);
-	var DRAGON_RIGHT = new Animation([
-		new Frame(document.getElementById("dragon1"), 5),
-		new Frame(document.getElementById("dragon2"), 5)
-	]);
-	var DRAGON_SPIT_LEFT = new Animation([
-		new Frame(ImageFactory.mirror(document.getElementById("dragon_spit")), 2),
-	]);
-	var DRAGON_SPIT_RIGHT = new Animation([
-		new Frame(document.getElementById("dragon_spit"), 2),
-	]);
+	var media;
 
-	var LOOT = [
-		document.getElementById("loot1"),
-		document.getElementById("loot2"),
-		document.getElementById("loot3")
-	];
+	function init() {
+		media = {
+			player_standing_left : document.getElementById("player_standing"),
+			player_standing_right : ImageFactory.mirror(document.getElementById("player_standing")),
+			player_ducking_left : document.getElementById("player_ducking"),
+			player_ducking_right : ImageFactory.mirror(document.getElementById("player_ducking")),
+			player_jumping_left : document.getElementById("player_jumping"),
+			player_jumping_right : ImageFactory.mirror(document.getElementById("player_jumping")),
+			player_running_left : new Animation([
+				new Frame(document.getElementById("player_running1"), 2),
+				new Frame(document.getElementById("player_running2"), 2),
+				new Frame(document.getElementById("player_running3"), 2),
+				new Frame(document.getElementById("player_running4"), 2)
+			]),
+			player_running_right : new Animation([
+				new Frame(ImageFactory.mirror(document.getElementById("player_running1")), 2),
+				new Frame(ImageFactory.mirror(document.getElementById("player_running2")), 2),
+				new Frame(ImageFactory.mirror(document.getElementById("player_running3")), 2),
+				new Frame(ImageFactory.mirror(document.getElementById("player_running4")), 2)
+			]),
+
+			flame : new Animation([
+				new Frame(document.getElementById("flame"), 2),
+				new Frame(ImageFactory.flip(document.getElementById("flame")), 2)
+			]),
+			dragon_fireball : new Animation([
+				new Frame(document.getElementById("dragonfire"), 2),
+				new Frame(ImageFactory.mirror(document.getElementById("dragonfire")), 2)
+			]),
+
+			dragon_left : new Animation([
+				new Frame(ImageFactory.mirror(document.getElementById("dragon1")), 5),
+				new Frame(ImageFactory.mirror(document.getElementById("dragon2")), 5)
+			]),
+			dragon_right : new Animation([
+				new Frame(document.getElementById("dragon1"), 5),
+				new Frame(document.getElementById("dragon2"), 5)
+			]),
+			dragon_spit_left :new Animation([
+				new Frame(ImageFactory.mirror(document.getElementById("dragon_spit")), 2),
+			]),
+			dragon_spit_right : new Animation([
+				new Frame(document.getElementById("dragon_spit"), 2),
+			]),
+
+			door : document.getElementById("door"),
+			loot : 	[
+				document.getElementById("loot1"),
+				document.getElementById("loot2"),
+				document.getElementById("loot3")
+			]
+		}
+	}
 
 	function main() {
 		Quick.setName("Dragonfire");
@@ -72,6 +81,7 @@
 
 		function BridgeScene() {
 			Scene.call(this);
+			init();
 			this.completed = false;
 			var background = new BridgeBackground();
 			this.add(background);
@@ -149,20 +159,20 @@
 		BridgePlayer.prototype.updateAnimation = function (state) {
 			if (this.jumping && (state != "ducking")) {
 				var feetY = this.getBottom();
-				this.setImage(this.turnedLeft ? AMIN_PLAYER_JUMPING_LEFT : AMIN_PLAYER_JUMPING_RIGHT);
+				this.setImage(this.turnedLeft ? media['player_jumping_left'] : media['player_jumping_right']);
 				this.setSize(W, H);
 				this.prevState = state;
 			} else if (state != this.prevState) { /* if the state changed, update animation */
 				var feetY = this.getBottom();
 				if (state == "running") {
-					this.setAnimation(this.turnedLeft ? ANIM_PLAYER_RUNNING_LEFT : ANIM_PLAYER_RUNNING_RIGHT);
+					this.setAnimation(this.turnedLeft ? media['player_running_left'] : media['player_running_right']);
 					this.setSize(W, H);
 				} else if (state == "ducking") {
 					var feetY = this.getBottom();
-					this.setImage(this.turnedLeft ? AMIN_PLAYER_DUCKING_LEFT : AMIN_PLAYER_DUCKING_RIGHT);
+					this.setImage(this.turnedLeft ? media['player_ducking_left'] : media['player_ducking_left']);
 					this.setSize(W, H_DUCKING);
 				} else {	/* just standing */
-					this.setImage(this.turnedLeft ? AMIN_PLAYER_STANDING_LEFT : AMIN_PLAYER_STANDING_RIGHT);
+					this.setImage(this.turnedLeft ? media['player_standing_left'] : media['player_standing_right']);
 					this.setSize(W, H);
 				}
 				this.setBottom(feetY);
@@ -297,7 +307,7 @@
 		function Flame(isTop, speed) {
 			GameObject.call(this);
 			this.isTop = isTop;
-			this.setAnimation(FLAME);
+			this.setAnimation(media['flame']);
 			this.setSize(14, 8);
 			this.setPosition(
 				-Quick.random(90), 
@@ -388,10 +398,10 @@
 			if (state != this.prevState || this.prevLeft != this.turnedLeft) { /* if the state changed, update animation */
 				var feetY = this.getBottom();
 				if (state == "running") {
-					this.setAnimation(this.turnedLeft ? ANIM_PLAYER_RUNNING_LEFT : ANIM_PLAYER_RUNNING_RIGHT);
+					this.setAnimation(this.turnedLeft ? media['player_running_left'] : media['player_running_right']);
 					this.setSize(W, H);
 				} else {	/* just standing */
-					this.setImage(this.turnedLeft ? AMIN_PLAYER_STANDING_LEFT : AMIN_PLAYER_STANDING_RIGHT);
+					this.setImage(this.turnedLeft ? media['player_standing_left'] : media['player_standing_right']);
 					this.setSize(W, H);
 				}
 				this.setBottom(feetY);
@@ -475,9 +485,9 @@
 		Dragon.prototype.updateAnimation = function () {
 			if (this.prevLeft != this.goingLeft) {
 				if (this.goingLeft) {
-					this.setAnimation(DRAGON_LEFT);
+					this.setAnimation(media['dragon_left']);
 				} else {
-					this.setAnimation(DRAGON_RIGHT);			
+					this.setAnimation(media['dragon_right']);
 				}
 				this.prevLeft = this.goingLeft;
 			}
@@ -524,7 +534,7 @@
 						)
 					);
 					this.spitting = true;
-					this.setAnimation(this.goingLeft ? DRAGON_SPIT_LEFT : DRAGON_SPIT_RIGHT);
+					this.setAnimation(this.goingLeft ? media['dragon_spit_left'] : media['dragon_spit_right']);
 				}
 			}
 		};
@@ -538,7 +548,7 @@
 			GameObject.call(this);
 			this.addTag("Hot");
 			this.controller = Quick.getController();
-			this.setAnimation(DRAGONFIREBALL);
+			this.setAnimation(media['dragon_fireball']);
 			this.setSize(20, 20);
 			this.setPosition(x+5-Quick.random(16), y);
 			this.setSpeedY(-6);
@@ -569,7 +579,7 @@
 		function EntranceGate() {
 			GameObject.call(this);
 			this.addTag("EntranceGate");
-			this.setImage(document.getElementById("door"));
+			this.setImage(media['door']);
 			this.setSize(40, 45);
 			this.setPosition(Quick.getCanvasWidth()-60, Quick.getCanvasHeight()-180);
 			this.setSolid();
@@ -597,7 +607,7 @@
 		function Loot() {
 			GameObject.call(this);
 			this.addTag("Loot");
-			this.setImage(LOOT[Quick.random(2)]);
+			this.setImage(media['loot'][Quick.random(2)]);
 			this.setSize(20, 20);
 			this.setPosition(
 				100 + Quick.random(Quick.getCanvasWidth()-200),
