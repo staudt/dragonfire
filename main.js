@@ -37,6 +37,10 @@
 				new Frame(ImageFactory.mirror(document.getElementById("player_running3")), 2),
 				new Frame(ImageFactory.mirror(document.getElementById("player_running4")), 2)
 			]),
+			player_toasted : new Animation([
+				new Frame(document.getElementById("player_toasted"), 6),
+				new Frame(ImageFactory.mirror(document.getElementById("player_toasted")), 6)
+			]),
 
 			flame : new Animation([
 				new Frame(document.getElementById("flame"), 2),
@@ -116,16 +120,17 @@
 		}
 
 		BridgeScene.prototype.createFlames = function() {
+			if (player.burning) {
+				player.reset();
+			}
 			var speed1 = 6 + Quick.random(5) + score;
 			var speed2 = 6 + Quick.random(5) + score;
 			while (Math.abs(speed1-speed2)<3) {
 				speed2 = 6 + Quick.random(5) + score;
 			}
-			//for (var i=0; i<score+1;i++) {
-				this.add(new Flame(true, speed1));
-				this.add(new Flame(false, speed2));
-			//}
-			this.activeFlames=2; //*(score+1);
+			this.add(new Flame(true, speed1));
+			this.add(new Flame(false, speed2));
+			this.activeFlames=2;
 		}
 
 		BridgeScene.prototype.flameDied = function(isTop) {
@@ -146,18 +151,23 @@
 		function BridgePlayer() {
 			GameObject.call(this);
 			this.controller = Quick.getController();
-			this.prevState = "";
-			this.jumping = false;
-			this.turnedLeft = true;
-			this.updateAnimation("standing");
+			this.reset();
 			this.setSolid();
-			this.setPosition(Quick.getCanvasWidth()-this.getWidth()-70, Quick.getCanvasHeight()/3*2-20);
+			this.prevState = "";
 			this.setBoundary(Quick.getBoundary());
 			this.setAccelerationY(2);
 		}; BridgePlayer.prototype = Object.create(GameObject.prototype);
 
+		BridgePlayer.prototype.reset = function () {
+			this.jumping = false;
+			this.burning = false;
+			this.turnedLeft = true;
+			this.updateAnimation("standing");
+			this.setPosition(Quick.getCanvasWidth()-this.getWidth()-80, Quick.getCanvasHeight()/3*2-20);
+		}
+
 		BridgePlayer.prototype.updateAnimation = function (state) {
-			if (this.jumping && (state != "ducking")) {
+			if (this.jumping && (state != "ducking" && state != "burning")) {
 				var feetY = this.getBottom();
 				this.setImage(this.turnedLeft ? media['player_jumping_left'] : media['player_jumping_right']);
 				this.setSize(W, H);
@@ -171,6 +181,9 @@
 					var feetY = this.getBottom();
 					this.setImage(this.turnedLeft ? media['player_ducking_left'] : media['player_ducking_left']);
 					this.setSize(W, H_DUCKING);
+				} else if (state == "burning") {
+					this.setAnimation(media['player_toasted']);
+					this.setSize(W, H);
 				} else {	/* just standing */
 					this.setImage(this.turnedLeft ? media['player_standing_left'] : media['player_standing_right']);
 					this.setSize(W, H);
@@ -181,6 +194,9 @@
 		}
 
 		BridgePlayer.prototype.update = function () {
+			if (this.burning) {
+				return;
+			}
 			if (this.controller.keyDown(CommandEnum.DOWN)) {
 				this.updateAnimation("ducking");
 			} else {
@@ -204,18 +220,24 @@
 		};
 
 		BridgePlayer.prototype.onCollision = function(obj) {
-			if(obj.hasTag("fire")) {
-				this.getScene().expire();
-				lifes--;
-			} else if (obj.hasTag("LeftTower")) {
-				this.getScene().success();
-			} else if (obj.hasTag("Bridge")) {
+			if (!this.burning) {
+				if(obj.hasTag("fire")) {
+					this.updateAnimation("burning");
+					this.burning = true;
+					lifes--;
+				} else if (obj.hasTag("LeftTower")) {
+					this.getScene().success();
+				}
+			}
+			if (obj.hasTag("Bridge")) {
 				this.stop();
 				this.setBottom(obj.getTop());
 				if (this.jumping) {
 					this.jumping = false;
-					this.prevState = "jumping"; // quick fix :P
-					this.updateAnimation("standing");
+					if (!this.burning) {
+						this.prevState = "jumping"; // quick fix :P
+						this.updateAnimation("standing");
+					}
 				}
 			}
 		};
