@@ -100,6 +100,16 @@
 			this.titleText = new Text("        dragonfire\n\n\n\npress space to start");
 			this.titleText.setCenterFromPoint(Quick.getCanvasCenter());
 			this.add(this.titleText);
+			var scoreText = new Text("level " + (score+1));
+			scoreText.setPosition(Quick.getCanvasWidth()-scoreText.getWidth()-10, 10);
+			this.add(scoreText);
+			var icon = new GameObject();
+			icon.setImage(media['player_standing_right']);
+			icon.setPosition(10, 5);
+			icon.setSize(12, 22);
+			this.add(icon);
+			this.updateLifes();
+
 			player = new BridgePlayer();
 			this.add(player);
 			this.createFlames();
@@ -137,6 +147,13 @@
 			if (this.activeFlames<=0) {
 				this.createFlames();
 			}
+		}
+
+		BridgeScene.prototype.updateLifes = function() {
+			if (this.lifesText) this.lifesText.expire();
+			this.lifesText = new Text("x " + (lifes+1));
+			this.lifesText.setPosition(30, 10);
+			this.add(this.lifesText);
 		}
 
 		return BridgeScene;
@@ -366,6 +383,18 @@
 			this.add(player);
 			this.add(new Dragon());
 			this.add(new EntranceGate());
+
+			this.scoreText = new Text("level " + (score+1));
+			this.scoreText.setPosition(Quick.getCanvasWidth()-this.scoreText.getWidth()-10, 10);
+			this.add(this.scoreText);
+
+			var icon = new GameObject();
+			icon.setImage(media['player_standing_right']);
+			icon.setPosition(10, 5);
+			icon.setSize(12, 22);
+			this.add(icon);
+			this.updateLifes();
+
 			for(var i=0; i<this.lootItems;i++) {
 				this.add(new Loot());
 			}
@@ -390,6 +419,13 @@
 			if (this.lootItems<=0) {
 				this.add(new ExitGate());
 			}
+		}
+
+		CastleScene.prototype.updateLifes = function() {
+			if (this.lifesText) this.lifesText.expire();
+			this.lifesText = new Text("x " + (lifes+1));
+			this.lifesText.setPosition(30, 10);
+			this.add(this.lifesText);
 		}
 
 		return CastleScene;
