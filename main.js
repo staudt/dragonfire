@@ -241,6 +241,7 @@
 					this.updateAnimation("burning");
 					this.burning = true;
 					lifes--;
+					this.getScene().updateLifes();
 				} else if (obj.hasTag("LeftTower")) {
 					this.getScene().success();
 				}
@@ -502,6 +503,7 @@
 					lifes--;
 					this.setVisible(false);
 					this.hidden = true;
+					this.getScene().updateLifes();
 				}
 				if (obj.hasTag("Loot")) {
 					obj.expire();
