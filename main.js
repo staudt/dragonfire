@@ -97,10 +97,9 @@
 			var towerRight = new Tower(false);
 			this.add(towerRight);
 			towerRight.drawDecor();
-			/*var levelText = new Text("Level: " + score)
-			levelText.setCenterX(Quick.getCanvasCenterX());
-			levelText.setY(80);
-			this.add(levelText)*/
+			this.titleText = new Text("        dragonfire\n\n\n\npress space to start");
+			this.titleText.setCenterFromPoint(Quick.getCanvasCenter());
+			this.add(this.titleText);
 			player = new BridgePlayer();
 			this.add(player);
 			this.createFlames();
