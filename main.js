@@ -13,7 +13,7 @@
 
 	var player;
 	var score = 0;
-	var lifes = 3;
+	var lifes = 0;
 
 	var media;
 
@@ -38,6 +38,8 @@
 				new Frame(ImageFactory.mirror(document.getElementById("player_running4")), 2)
 			]),
 			player_toasted : new Animation([
+				new Frame(document.getElementById("player_toasted"), 6),
+				new Frame(ImageFactory.mirror(document.getElementById("player_toasted")), 6),
 				new Frame(document.getElementById("player_toasted"), 6),
 				new Frame(ImageFactory.mirror(document.getElementById("player_toasted")), 6)
 			]),
@@ -129,6 +131,7 @@
 		}
 
 		BridgeScene.prototype.createFlames = function() {
+			if (lifes <=0) return;
 			if (player.burning) {
 				player.reset();
 			}
@@ -151,7 +154,7 @@
 
 		BridgeScene.prototype.updateLifes = function() {
 			if (this.lifesText) this.lifesText.expire();
-			this.lifesText = new Text("x " + (lifes+1));
+			this.lifesText = new Text("x " + lifes);
 			this.lifesText.setPosition(30, 10);
 			this.add(this.lifesText);
 		}
@@ -376,7 +379,6 @@
 
 		function CastleScene() {
 			Scene.call(this);
-			this.completed = false;
 			this.lootItems = 8;
 			var background = new CastleBackground();
 			this.add(background);
@@ -402,15 +404,10 @@
 		}; CastleScene.prototype = Object.create(Scene.prototype);
 
 		CastleScene.prototype.getNext = function () {
-			if (this.completed) {
-				return new BridgeScene();
-			} else {
-				return new CastleScene();
-			}
+			return new BridgeScene();
 		}
 
 		CastleScene.prototype.success = function () {
-			this.completed = true;
 			score++;
 			this.expire();
 		}
@@ -441,6 +438,7 @@
 			GameObject.call(this);
 			this.controller = Quick.getController();
 			this.hidden = false;
+			this.burning = false;
 			this.prevState = "";
 			this.turnedLeft = true;
 			this.prevLeft = true;
@@ -453,9 +451,15 @@
 		}; CastlePlayer.prototype = Object.create(GameObject.prototype);
 
 		CastlePlayer.prototype.updateAnimation = function (state) {
+			if (this.burning) return;
+
 			if (state != this.prevState || this.prevLeft != this.turnedLeft) { /* if the state changed, update animation */
 				var feetY = this.getBottom();
-				if (state == "running") {
+				if (state == "burning") {
+					this.burning = true;
+					this.setAnimation(media['player_toasted']);
+					this.setSize(W, H);
+				} else if (state == "running") {
 					this.setAnimation(this.turnedLeft ? media['player_running_left'] : media['player_running_right']);
 					this.setSize(W, H);
 				} else {	/* just standing */
@@ -469,6 +473,8 @@
 		}
 
 		CastlePlayer.prototype.update = function () {
+			if (this.burning) return;
+
 			if (this.hidden) {
 				if (this.controller.keyDown(CommandEnum.LEFT) && this.getLeft() > 0) {
 					this.setVisible(true);
@@ -498,11 +504,12 @@
 		};
 
 		CastlePlayer.prototype.onCollision = function(obj) {
+			if (this.burning) return;
+
 			if (!this.hidden) {
 				if (obj.hasTag("Hot")) {
 					lifes--;
-					this.setVisible(false);
-					this.hidden = true;
+					this.updateAnimation("burning");
 					this.getScene().updateLifes();
 				}
 				if (obj.hasTag("Loot")) {
@@ -518,6 +525,16 @@
 				}
 			}
 		};
+
+		CastlePlayer.prototype.onAnimationLoop = function() {
+			if (this.burning) {
+				this.burning = false;
+				this.hidden = false;
+				this.setPosition(this.startX, this.startY);
+				this.turnedLeft = true;
+				this.updateAnimation();				
+			}
+		}
 
 		CastlePlayer.prototype.offBoundary = function(rct) {
 			this.stop();
@@ -560,7 +577,7 @@
 		};
 
 		Dragon.prototype.update = function () {
-			if (player.hidden) {	/* idle */
+			if (player.hidden || player.burning) {	/* idle */
 				if (this.goingLeft) {
 					this.moveX(-SPEED - score)
 					if (this.getX() < 100) {
@@ -592,8 +609,10 @@
 							this.getCenterY()
 						)
 					);
-					this.spitting = true;
-					this.setAnimation(this.goingLeft ? media['dragon_spit_left'] : media['dragon_spit_right']);
+					if (!this.spitting) {
+						this.spitting = true;
+						this.setAnimation(this.goingLeft ? media['dragon_spit_left'] : media['dragon_spit_right']);
+					}
 				}
 			}
 		};
