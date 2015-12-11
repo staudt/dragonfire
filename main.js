@@ -164,6 +164,7 @@
 			}
 			this.add(new Flame(true, speed1));
 			this.add(new Flame(false, speed2));
+			Quick.play("fire");
 			this.activeFlames=2;
 		}
 
@@ -268,6 +269,7 @@
 				this.setSpeedY(-10);
 				this.jumping = true;
 				this.updateAnimation("jumping");
+				Quick.play("jump");
 			} 
 		};
 
@@ -277,6 +279,7 @@
 					this.updateAnimation("burning");
 					this.burning = true;
 					lifes--;
+					Quick.play("death");
 					if (lifes < 0) {
 						this.getScene().showText(true);
 					}
@@ -545,12 +548,14 @@
 			if (!this.hidden) {
 				if (obj.hasTag("Hot")) {
 					lifes--;
+					Quick.play("death");
 					this.updateAnimation("burning");
 					this.getScene().updateLifes();
 				}
 				if (obj.hasTag("Loot")) {
 					obj.expire();
 					this.getScene().caughtLoot();
+					Quick.play("pickup");
 				}
 				if (obj.hasTag("ExitGate")) {
 					this.getScene().success();
@@ -673,6 +678,7 @@
 			this.setSpeedY(-6);
 			this.setBoundary(Quick.getBoundary());
 			this.setSolid();
+			Quick.play("fire");
 		}; DragonFireball.prototype = Object.create(GameObject.prototype);
 
 		DragonFireball.prototype.offBoundary = function () {
