@@ -13,7 +13,7 @@
 
 	var player;
 	var score = 0;
-	var lifes = 0;
+	var lifes = -1;
 
 	var media;
 
@@ -26,16 +26,16 @@
 			player_jumping_left : document.getElementById("player_jumping"),
 			player_jumping_right : ImageFactory.mirror(document.getElementById("player_jumping")),
 			player_running_left : new Animation([
-				new Frame(document.getElementById("player_running1"), 2),
-				new Frame(document.getElementById("player_running2"), 2),
-				new Frame(document.getElementById("player_running3"), 2),
-				new Frame(document.getElementById("player_running4"), 2)
+				new Frame(document.getElementById("player_running1"), 3),
+				new Frame(document.getElementById("player_running2"), 3),
+				new Frame(document.getElementById("player_running3"), 3),
+				new Frame(document.getElementById("player_running4"), 3)
 			]),
 			player_running_right : new Animation([
-				new Frame(ImageFactory.mirror(document.getElementById("player_running1")), 2),
-				new Frame(ImageFactory.mirror(document.getElementById("player_running2")), 2),
-				new Frame(ImageFactory.mirror(document.getElementById("player_running3")), 2),
-				new Frame(ImageFactory.mirror(document.getElementById("player_running4")), 2)
+				new Frame(ImageFactory.mirror(document.getElementById("player_running1")), 3),
+				new Frame(ImageFactory.mirror(document.getElementById("player_running2")), 3),
+				new Frame(ImageFactory.mirror(document.getElementById("player_running3")), 3),
+				new Frame(ImageFactory.mirror(document.getElementById("player_running4")), 3)
 			]),
 			player_toasted : new Animation([
 				new Frame(document.getElementById("player_toasted"), 6),
@@ -45,12 +45,12 @@
 			]),
 
 			flame : new Animation([
-				new Frame(document.getElementById("flame"), 2),
-				new Frame(ImageFactory.flip(document.getElementById("flame")), 2)
+				new Frame(document.getElementById("flame"), 3),
+				new Frame(ImageFactory.flip(document.getElementById("flame")), 3)
 			]),
 			dragon_fireball : new Animation([
-				new Frame(document.getElementById("dragonfire"), 2),
-				new Frame(ImageFactory.mirror(document.getElementById("dragonfire")), 2)
+				new Frame(document.getElementById("dragonfire"), 3),
+				new Frame(ImageFactory.mirror(document.getElementById("dragonfire")), 3)
 			]),
 
 			dragon_left : new Animation([
@@ -91,6 +91,7 @@
 			this.completed = false;
 			var background = new BridgeBackground();
 			this.add(background);
+			this.drawStars();
 			this.add(new Bridge());
 			this.add(new River());
 			var towerLeft = new Tower(true);
@@ -99,22 +100,23 @@
 			var towerRight = new Tower(false);
 			this.add(towerRight);
 			towerRight.drawDecor();
-			this.titleText = new Text("        dragonfire\n\n\n\npress space to start");
-			this.titleText.setCenterFromPoint(Quick.getCanvasCenter());
-			this.add(this.titleText);
 			var scoreText = new Text("level " + (score+1));
-			scoreText.setPosition(Quick.getCanvasWidth()-scoreText.getWidth()-10, 10);
+			scoreText.setPosition(200, 10);
 			this.add(scoreText);
 			var icon = new GameObject();
 			icon.setImage(media['player_standing_right']);
-			icon.setPosition(10, 5);
+			icon.setPosition(382, 5);
 			icon.setSize(12, 22);
 			this.add(icon);
 			this.updateLifes();
-
 			player = new BridgePlayer();
 			this.add(player);
 			this.createFlames();
+			if (lifes < 0) {
+				this.showText(true);
+			} else {
+				player.reset();
+			}
 		}; BridgeScene.prototype = Object.create(Scene.prototype);
 
 		BridgeScene.prototype.getNext = function () {
@@ -125,13 +127,33 @@
 			}
 		}
 
+		BridgeScene.prototype.drawStars = function () {
+			var star;
+			for(var i=0;i<30;i++) {
+				star = new GameObject();
+				star.setSize(1,1);
+				star.setColor("White");
+				star.setPosition(Quick.random(Quick.getCanvasWidth()), Quick.random(Quick.getCanvasHeight()));
+				this.add(star);
+			}
+		}
+
+		BridgeScene.prototype.showText = function(show) {
+			if (this.titleText) this.titleText.expire();
+			if (show) {
+				this.titleText = new Text("        dragonfire\n\n\n\npress space to start");
+				this.titleText.setCenterFromPoint(Quick.getCanvasCenter());
+				this.add(this.titleText);
+			}
+		}
+
 		BridgeScene.prototype.success = function () {
 			this.completed = true;
 			this.expire();
 		}
 
 		BridgeScene.prototype.createFlames = function() {
-			if (lifes <=0) return;
+			if (lifes < 0) return;
 			if (player.burning) {
 				player.reset();
 			}
@@ -154,8 +176,8 @@
 
 		BridgeScene.prototype.updateLifes = function() {
 			if (this.lifesText) this.lifesText.expire();
-			this.lifesText = new Text("x " + lifes);
-			this.lifesText.setPosition(30, 10);
+			this.lifesText = new Text("x " + (lifes >= 0 ? lifes : "-"));
+			this.lifesText.setPosition(400, 10);
 			this.add(this.lifesText);
 		}
 
@@ -175,12 +197,14 @@
 			this.prevState = "";
 			this.setBoundary(Quick.getBoundary());
 			this.setAccelerationY(2);
+			this.setVisible(false);
 		}; BridgePlayer.prototype = Object.create(GameObject.prototype);
 
 		BridgePlayer.prototype.reset = function () {
 			this.jumping = false;
 			this.burning = false;
 			this.turnedLeft = true;
+			this.setVisible(true);
 			this.updateAnimation("standing");
 			this.setPosition(Quick.getCanvasWidth()-this.getWidth()-80, Quick.getCanvasHeight()/3*2-20);
 		}
@@ -198,7 +222,7 @@
 					this.setSize(W, H);
 				} else if (state == "ducking") {
 					var feetY = this.getBottom();
-					this.setImage(this.turnedLeft ? media['player_ducking_left'] : media['player_ducking_left']);
+					this.setImage(this.turnedLeft ? media['player_ducking_left'] : media['player_ducking_right']);
 					this.setSize(W, H_DUCKING);
 				} else if (state == "burning") {
 					this.setAnimation(media['player_toasted']);
@@ -213,7 +237,16 @@
 		}
 
 		BridgePlayer.prototype.update = function () {
-			if (this.burning) {
+			if (this.burning && lifes >= 0) {
+				return;
+			}
+			if (lifes < 0) {
+				if (this.controller.keyPush(CommandEnum.A)) {
+					lifes = 6;
+					score = 0;
+					this.getScene().expire();
+				} 
+
 				return;
 			}
 			if (this.controller.keyDown(CommandEnum.DOWN)) {
@@ -244,6 +277,9 @@
 					this.updateAnimation("burning");
 					this.burning = true;
 					lifes--;
+					if (lifes < 0) {
+						this.getScene().showText(true);
+					}
 					this.getScene().updateLifes();
 				} else if (obj.hasTag("LeftTower")) {
 					this.getScene().success();
@@ -273,7 +309,7 @@
 
 		function BridgeBackground() {
 			GameObject.call(this);
-			this.setColor("Purple");
+			this.setColor("#450045");
 			this.setSize(Quick.getCanvasWidth(), Quick.getCanvasHeight());
 		}; BridgeBackground.prototype = Object.create(GameObject.prototype);
 
@@ -388,12 +424,12 @@
 			this.add(new EntranceGate());
 
 			this.scoreText = new Text("level " + (score+1));
-			this.scoreText.setPosition(Quick.getCanvasWidth()-this.scoreText.getWidth()-10, 10);
+			this.scoreText.setPosition(200, 10);
 			this.add(this.scoreText);
 
 			var icon = new GameObject();
 			icon.setImage(media['player_standing_right']);
-			icon.setPosition(10, 5);
+			icon.setPosition(382, 5);
 			icon.setSize(12, 22);
 			this.add(icon);
 			this.updateLifes();
@@ -421,8 +457,8 @@
 
 		CastleScene.prototype.updateLifes = function() {
 			if (this.lifesText) this.lifesText.expire();
-			this.lifesText = new Text("x " + (lifes+1));
-			this.lifesText.setPosition(30, 10);
+			this.lifesText = new Text("x " + (lifes >= 0 ? lifes : "-"));
+			this.lifesText.setPosition(400, 10);
 			this.add(this.lifesText);
 		}
 
@@ -528,11 +564,16 @@
 
 		CastlePlayer.prototype.onAnimationLoop = function() {
 			if (this.burning) {
-				this.burning = false;
-				this.hidden = false;
-				this.setPosition(this.startX, this.startY);
-				this.turnedLeft = true;
-				this.updateAnimation();				
+				if (lifes < 0) {
+					this.getScene().completed = true;
+					this.getScene().expire();
+				} else {
+					this.burning = false;
+					this.hidden = false;
+					this.setPosition(this.startX, this.startY);
+					this.turnedLeft = true;
+					this.updateAnimation();				
+				}
 			}
 		}
 
@@ -645,7 +686,7 @@
 
 		function CastleBackground() {
 			GameObject.call(this);
-			this.setColor("Black");
+			this.setColor("#101010");
 			this.setSize(Quick.getCanvasWidth(), Quick.getCanvasHeight());
 		}; CastleBackground.prototype = Object.create(GameObject.prototype);
 
