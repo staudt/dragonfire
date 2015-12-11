@@ -141,7 +141,7 @@
 		BridgeScene.prototype.showText = function(show) {
 			if (this.titleText) this.titleText.expire();
 			if (show) {
-				this.titleText = new Text("        dragonfire\n\n\n\npress space to start");
+				this.titleText = new Text("        dragonfire\n\n\n\npress the a button or space to start");
 				this.titleText.setCenterFromPoint(Quick.getCanvasCenter());
 				this.add(this.titleText);
 			}
