@@ -369,6 +369,7 @@
 			}
 			this.setSolid();
 			this.setLayerIndex(1);
+			this.left = left;
 		}; Tower.prototype = Object.create(GameObject.prototype);
 
 		Tower.prototype.drawDecor = function() {
@@ -378,6 +379,21 @@
 			towerTop.setCenterX(this.getCenterX());
 			towerTop.setBottom(this.getTop());
 			this.getScene().add(towerTop);
+			var towerTopping;
+			for (var i=0;i<3;i++) {
+				towerTopping = new GameObject();
+				towerTopping.setColor("Black");
+				towerTopping.setSize(20);
+				towerTopping.setBottom(towerTop.getTop());
+				towerTopping.setLeft((this.left) ? 30*i : Quick.getCanvasWidth()-20-(30*i));
+				this.getScene().add(towerTopping);
+			}
+			var towerWindow = new GameObject();
+			towerWindow.setColor("#450045");
+			towerWindow.setSize(20);
+			towerWindow.setCenterX(towerTop.getCenterX());
+			towerWindow.setBottom(towerTop.getCenterY());
+			this.getScene().add(towerWindow);
 		}
 
 		return Tower;
