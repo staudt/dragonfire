@@ -5,4 +5,4 @@ You can play it on your browser [clicking here](http://staudt.github.io/dragonfi
 
 This game was developed using the cool [Quick](https://github.com/dgsprb/quick) game library.
 
-Special thanks to Diogo Schneider and Gabriel Oliveira for helping out during the development. 
+Special thanks to Diogo Schneider and Gabriel Oliveira for helping out during the development.
