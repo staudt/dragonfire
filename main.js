@@ -1,125 +1,125 @@
 (function () {
 	"use strict";
 
-	var CommandEnum = com.dgsprb.quick.CommandEnum;
-	var Quick = com.dgsprb.quick.Quick;
-	var GameObject = com.dgsprb.quick.Rect;
-	var GameObject = com.dgsprb.quick.GameObject;
-	var Scene = com.dgsprb.quick.Scene;
-	var Animation = com.dgsprb.quick.Animation;
-	var ImageFactory = com.dgsprb.quick.ImageFactory;
-	var Frame = com.dgsprb.quick.Frame;
-	var Text = com.dgsprb.quick.Text;
+	const Animation = quick.Animation;
+	const Command = quick.Command;
+	const FontSprite = quick.FontSprite;
+	const Frame = quick.Frame;
+	const ImageFactory = quick.ImageFactory;
+	const Quick = quick.Quick;
+	const Scene = quick.Scene;
+	const Sprite = quick.Sprite;
 
-	var player;
-	var score = 0;
-	var lifes = -1;
-
-	var media;
+	let lives = -1;
+	let media;
+	let player;
+	let score = 0;
 
 	function init() {
 		media = {
 			player_standing_left : document.getElementById("player_standing"),
-			player_standing_right : ImageFactory.mirror(document.getElementById("player_standing")),
+			player_standing_right : Quick.mirror(document.getElementById("player_standing")),
 			player_ducking_left : document.getElementById("player_ducking"),
-			player_ducking_right : ImageFactory.mirror(document.getElementById("player_ducking")),
+			player_ducking_right : Quick.mirror(document.getElementById("player_ducking")),
 			player_jumping_left : document.getElementById("player_jumping"),
-			player_jumping_right : ImageFactory.mirror(document.getElementById("player_jumping")),
+			player_jumping_right : Quick.mirror(document.getElementById("player_jumping")),
+
 			player_running_left : new Animation([
 				new Frame(document.getElementById("player_running1"), 3),
 				new Frame(document.getElementById("player_running2"), 3),
 				new Frame(document.getElementById("player_running3"), 3),
 				new Frame(document.getElementById("player_running4"), 3)
 			]),
+
 			player_running_right : new Animation([
-				new Frame(ImageFactory.mirror(document.getElementById("player_running1")), 3),
-				new Frame(ImageFactory.mirror(document.getElementById("player_running2")), 3),
-				new Frame(ImageFactory.mirror(document.getElementById("player_running3")), 3),
-				new Frame(ImageFactory.mirror(document.getElementById("player_running4")), 3)
+				new Frame(Quick.mirror(document.getElementById("player_running1")), 3),
+				new Frame(Quick.mirror(document.getElementById("player_running2")), 3),
+				new Frame(Quick.mirror(document.getElementById("player_running3")), 3),
+				new Frame(Quick.mirror(document.getElementById("player_running4")), 3)
 			]),
+
 			player_toasted : new Animation([
 				new Frame(document.getElementById("player_toasted"), 6),
-				new Frame(ImageFactory.mirror(document.getElementById("player_toasted")), 6),
+				new Frame(Quick.mirror(document.getElementById("player_toasted")), 6),
 				new Frame(document.getElementById("player_toasted"), 6),
-				new Frame(ImageFactory.mirror(document.getElementById("player_toasted")), 6)
+				new Frame(Quick.mirror(document.getElementById("player_toasted")), 6)
 			]),
 
 			flame : new Animation([
 				new Frame(document.getElementById("flame"), 3),
-				new Frame(ImageFactory.flip(document.getElementById("flame")), 3)
+				new Frame(Quick.flip(document.getElementById("flame")), 3)
 			]),
+
 			dragon_fireball : new Animation([
 				new Frame(document.getElementById("dragonfire"), 3),
-				new Frame(ImageFactory.mirror(document.getElementById("dragonfire")), 3)
+				new Frame(Quick.mirror(document.getElementById("dragonfire")), 3)
 			]),
 
 			dragon_left : new Animation([
-				new Frame(ImageFactory.mirror(document.getElementById("dragon1")), 5),
-				new Frame(ImageFactory.mirror(document.getElementById("dragon2")), 5)
+				new Frame(Quick.mirror(document.getElementById("dragon1")), 5),
+				new Frame(Quick.mirror(document.getElementById("dragon2")), 5)
 			]),
+
 			dragon_right : new Animation([
 				new Frame(document.getElementById("dragon1"), 5),
 				new Frame(document.getElementById("dragon2"), 5)
 			]),
+
 			dragon_spit_left :new Animation([
-				new Frame(ImageFactory.mirror(document.getElementById("dragon_spit")), 2),
+				new Frame(Quick.mirror(document.getElementById("dragon_spit")), 2),
 			]),
+
 			dragon_spit_right : new Animation([
 				new Frame(document.getElementById("dragon_spit"), 2),
 			]),
 
 			door : document.getElementById("door"),
-			loot : 	[
+
+			loot : [
 				document.getElementById("loot1"),
 				document.getElementById("loot2"),
 				document.getElementById("loot3")
 			]
-		}
+		};
 	}
 
-	function main() {
-		Quick.setName("Dragonfire");
-		Quick.setNumberOfLayers(2);
-		Quick.init(function () { return new BridgeScene() });
-	}
-
-	var BridgeScene = (function () {
-
-		function BridgeScene() {
-			Scene.call(this);
+	class BridgeScene extends Scene {
+		constructor() {
+			super();
 			init();
 			this.completed = false;
-			var background = new BridgeBackground();
+			let background = new BridgeBackground();
 			this.add(background);
 			this.drawStars();
 			this.add(new Bridge());
 			this.add(new River());
-			var towerLeft = new Tower(true);
+			let towerLeft = new Tower(true);
 			this.add(towerLeft);
 			towerLeft.drawDecor();
-			var towerRight = new Tower(false);
+			let towerRight = new Tower(false);
 			this.add(towerRight);
 			towerRight.drawDecor();
-			var scoreText = new Text("level " + (score+1));
+			let scoreText = new FontSprite("level " + (score+1));
 			scoreText.setPosition(200, 10);
 			this.add(scoreText);
-			var icon = new GameObject();
-			icon.setImage(media['player_standing_right']);
+			let icon = new Sprite();
+			icon.setImage(media["player_standing_right"]);
 			icon.setPosition(382, 5);
 			icon.setSize(12, 22);
 			this.add(icon);
-			this.updateLifes();
+			this.updateLives();
 			player = new BridgePlayer();
 			this.add(player);
 			this.createFlames();
-			if (lifes < 0) {
+
+			if (lives < 0) {
 				this.showText(true);
 			} else {
 				player.reset();
 			}
-		}; BridgeScene.prototype = Object.create(Scene.prototype);
+		}
 
-		BridgeScene.prototype.getNext = function () {
+		get next() {
 			if (this.completed) {
 				return new CastleScene();
 			} else {
@@ -127,638 +127,650 @@
 			}
 		}
 
-		BridgeScene.prototype.drawStars = function () {
-			var star;
-			for(var i=0;i<30;i++) {
-				star = new GameObject();
+		// TODO: use https://github.com/diogoeichert/quick/tree/master/plugins/starfield
+		drawStars() {
+			let star;
+
+			for (let i = 0; i < 30; ++i) {
+				star = new Sprite();
 				star.setSize(1,1);
 				star.setColor("White");
-				star.setPosition(Quick.random(Quick.getCanvasWidth()), Quick.random(Quick.getCanvasHeight()));
+				star.setPosition(Quick.random(Quick.width), Quick.random(Quick.height));
 				this.add(star);
 			}
 		}
 
-		BridgeScene.prototype.showText = function(show) {
+		showText(show) {
 			if (this.titleText) this.titleText.expire();
+
 			if (show) {
-				this.titleText = new Text("           dragonfire\n\n\n\npush a or space to start");
-				this.titleText.setCenterFromPoint(Quick.getCanvasCenter());
+				this.titleText = new FontSprite("           dragonfire\n\n\n\npush a or space to start");
+				this.titleText.setCenter(Quick.center);
 				this.add(this.titleText);
 			}
 		}
 
-		BridgeScene.prototype.success = function () {
+		success() {
 			this.completed = true;
 			this.expire();
 		}
 
-		BridgeScene.prototype.createFlames = function() {
-			if (lifes < 0) return;
+		createFlames() {
+			if (lives < 0) return;
+
 			if (player.burning) {
 				player.reset();
 			}
-			var speed1 = 6 + Quick.random(5) + score;
-			var speed2 = 6 + Quick.random(5) + score;
-			while (Math.abs(speed1-speed2)<3) {
+
+			let speed1 = 6 + Quick.random(5) + score;
+			let speed2 = 6 + Quick.random(5) + score;
+
+			while (Math.abs(speed1 - speed2) < 3) {
 				speed2 = 6 + Quick.random(5) + score;
 			}
+
 			this.add(new Flame(true, speed1));
 			this.add(new Flame(false, speed2));
 			Quick.play("fire");
-			this.activeFlames=2;
+			this.activeFlames = 2;
 		}
 
-		BridgeScene.prototype.flameDied = function(isTop) {
-			this.activeFlames--;
-			if (this.activeFlames<=0) {
+		flameDied(isTop) {
+			if (--this.activeFlames <= 0) {
 				this.createFlames();
 			}
 		}
 
-		BridgeScene.prototype.updateLifes = function() {
-			if (this.lifesText) this.lifesText.expire();
-			this.lifesText = new Text("x " + (lifes >= 0 ? lifes : "-"));
-			this.lifesText.setPosition(400, 10);
-			this.add(this.lifesText);
+		updateLives() {
+			if (this.livesText) this.livesText.expire();
+			this.livesText = new FontSprite("x " + (lives >= 0 ? lives : "-"));
+			this.livesText.setPosition(400, 10);
+			this.add(this.livesText);
 		}
+	}
 
-		return BridgeScene;
-	})();
+	// TODO: use https://github.com/diogoeichert/quick/tree/master/plugins/jumper
+	const BridgePlayer = (function () {
+		const SPEED = 9;
+		const W = 12, H = 22, H_DUCKING = 12;
 
-	var BridgePlayer = (function () {
-		
-		var SPEED = 9;
-		var W = 12, H = 22, H_DUCKING = 12;
+		class BridgePlayer extends Sprite {
+			constructor() {
+				super();
+				this.controller = Quick.getController();
+				this.reset();
+				this.setSolid();
+				this.prevState = "";
+				this.setAccelerationY(2);
+				this.setVisible(false);
+			}
 
-		function BridgePlayer() {
-			GameObject.call(this);
-			this.controller = Quick.getController();
-			this.reset();
-			this.setSolid();
-			this.prevState = "";
-			this.setBoundary(Quick.getBoundary());
-			this.setAccelerationY(2);
-			this.setVisible(false);
-		}; BridgePlayer.prototype = Object.create(GameObject.prototype);
+			init() {
+				this.setBoundary(this.scene.boundary);
+			}
 
-		BridgePlayer.prototype.reset = function () {
-			this.jumping = false;
-			this.burning = false;
-			this.turnedLeft = true;
-			this.setVisible(true);
-			this.updateAnimation("standing");
-			this.setPosition(Quick.getCanvasWidth()-this.getWidth()-80, Quick.getCanvasHeight()/3*2-20);
-		}
+			reset() {
+				this.jumping = false;
+				this.burning = false;
+				this.turnedLeft = true;
+				this.setVisible(true);
+				this.updateAnimation("standing");
+				this.setPosition(Quick.width - this.width - 80, Quick.height / 3 * 2 - 20);
+			}
 
-		BridgePlayer.prototype.updateAnimation = function (state) {
-			if (this.jumping && (state != "ducking" && state != "burning")) {
-				var feetY = this.getBottom();
-				this.setImage(this.turnedLeft ? media['player_jumping_left'] : media['player_jumping_right']);
-				this.setSize(W, H);
-				this.prevState = state;
-			} else if (state != this.prevState) { /* if the state changed, update animation */
-				var feetY = this.getBottom();
-				if (state == "running") {
-					this.setAnimation(this.turnedLeft ? media['player_running_left'] : media['player_running_right']);
+			updateAnimation(state) {
+				if (this.jumping && (state != "ducking" && state != "burning")) {
+					let feetY = this.bottom;
+					this.setImage(this.turnedLeft ? media["player_jumping_left"] : media["player_jumping_right"]);
 					this.setSize(W, H);
-				} else if (state == "ducking") {
-					var feetY = this.getBottom();
-					this.setImage(this.turnedLeft ? media['player_ducking_left'] : media['player_ducking_right']);
-					this.setSize(W, H_DUCKING);
-				} else if (state == "burning") {
-					this.setAnimation(media['player_toasted']);
-					this.setSize(W, H);
-				} else {	/* just standing */
-					this.setImage(this.turnedLeft ? media['player_standing_left'] : media['player_standing_right']);
-					this.setSize(W, H);
-				}
-				this.setBottom(feetY);
-				this.prevState = state;
-			}
-		}
-
-		BridgePlayer.prototype.update = function () {
-			if (this.burning && lifes >= 0) {
-				return;
-			}
-			if (lifes < 0) {
-				if (this.controller.keyPush(CommandEnum.A)) {
-					lifes = 6;
-					score = 0;
-					this.getScene().expire();
-				} 
-
-				return;
-			}
-			if (this.controller.keyDown(CommandEnum.DOWN)) {
-				this.updateAnimation("ducking");
-			} else {
-				if (this.controller.keyDown(CommandEnum.LEFT) && this.getLeft() > 0) {
-					this.moveX(-SPEED);
-					this.turnedLeft = true;
-					this.updateAnimation("running");
-				} else if (this.controller.keyDown(CommandEnum.RIGHT) && this.getRight() < Quick.getCanvasWidth()) {
-					this.moveX(SPEED);
-					this.turnedLeft = false;
-					this.updateAnimation("running");
-				} else {
-					this.updateAnimation("standing");
-				}
-			}
-			if (this.controller.keyPush(CommandEnum.A) && !this.jumping) {
-				this.setSpeedY(-10);
-				this.jumping = true;
-				this.updateAnimation("jumping");
-				Quick.play("jump");
-			} 
-		};
-
-		BridgePlayer.prototype.onCollision = function(obj) {
-			if (!this.burning) {
-				if(obj.hasTag("fire")) {
-					this.updateAnimation("burning");
-					this.burning = true;
-					lifes--;
-					Quick.play("death");
-					if (lifes < 0) {
-						this.getScene().showText(true);
+					this.prevState = state;
+				} else if (state != this.prevState) { /* if the state changed, update animation */
+					let feetY = this.bottom;
+					if (state == "running") {
+						this.setAnimation(this.turnedLeft ? media["player_running_left"] : media["player_running_right"]);
+						this.setSize(W, H);
+					} else if (state == "ducking") {
+						let feetY = this.bottom;
+						this.setImage(this.turnedLeft ? media["player_ducking_left"] : media["player_ducking_right"]);
+						this.setSize(W, H_DUCKING);
+					} else if (state == "burning") {
+						this.setAnimation(media["player_toasted"]);
+						this.setSize(W, H);
+					} else {	/* just standing */
+						this.setImage(this.turnedLeft ? media["player_standing_left"] : media["player_standing_right"]);
+						this.setSize(W, H);
 					}
-					this.getScene().updateLifes();
-				} else if (obj.hasTag("LeftTower")) {
-					this.getScene().success();
+					this.setBottom(feetY);
+					this.prevState = state;
 				}
 			}
-			if (obj.hasTag("Bridge")) {
-				this.stop();
-				this.setBottom(obj.getTop());
-				if (this.jumping) {
-					this.jumping = false;
-					if (!this.burning) {
-						this.prevState = "jumping"; // quick fix :P
+
+			update() {
+				if (this.burning && lives >= 0) {
+					return;
+				}
+
+				if (lives < 0) {
+					if (this.controller.keyPush(Command.A)) {
+						lives = 6;
+						score = 0;
+						this.scene.expire();
+					}
+
+					return;
+				}
+
+				if (this.controller.keyDown(Command.DOWN)) {
+					this.updateAnimation("ducking");
+				} else {
+					if (this.controller.keyDown(Command.LEFT) && this.left > 0) {
+						this.x -= SPEED;
+						this.turnedLeft = true;
+						this.updateAnimation("running");
+					} else if (this.controller.keyDown(Command.RIGHT) && this.right < Quick.width) {
+						this.x += SPEED;
+						this.turnedLeft = false;
+						this.updateAnimation("running");
+					} else {
 						this.updateAnimation("standing");
 					}
 				}
-			}
-		};
 
-		BridgePlayer.prototype.offBoundary = function(rct) {
-			this.stop();
-		};
+				if (this.controller.keyPush(Command.A) && !this.jumping) {
+					this.setSpeedY(-10);
+					this.jumping = true;
+					this.updateAnimation("jumping");
+					Quick.play("jump");
+				}
+			}
+
+			onCollision(obj) {
+				if (!this.burning) {
+					if(obj.hasTag("fire")) {
+						this.updateAnimation("burning");
+						this.burning = true;
+						--lives;
+						Quick.play("death");
+						if (lives < 0) {
+							this.scene.showText(true);
+						}
+						this.scene.updateLives();
+					} else if (obj.hasTag("LeftTower")) {
+						this.scene.success();
+					}
+				}
+
+				if (obj.hasTag("Bridge")) {
+					this.stop();
+					this.setBottom(obj.top);
+
+					if (this.jumping) {
+						this.jumping = false;
+
+						if (!this.burning) {
+							this.prevState = "jumping"; // quick fix :P
+							this.updateAnimation("standing");
+						}
+					}
+				}
+			}
+
+			offBoundary(rct) {
+				this.stop();
+			}
+		}
 
 		return BridgePlayer;
 	})();
 
-	var BridgeBackground = (function () {
-
-		function BridgeBackground() {
-			GameObject.call(this);
+	class BridgeBackground extends Sprite {
+		constructor() {
+			super();
 			this.setColor("#450045");
-			this.setSize(Quick.getCanvasWidth(), Quick.getCanvasHeight());
-		}; BridgeBackground.prototype = Object.create(GameObject.prototype);
+			this.setSize(Quick.width, Quick.height);
+		}
+	}
 
-		return BridgeBackground;
-	})();
-
-	var Bridge = (function () {
-
-		function Bridge() {
-			GameObject.call(this);
+	class Bridge extends Sprite {
+		constructor() {
+			super();
 			this.setColor("Black");
-			this.setSize(Quick.getCanvasWidth(), 30);
-			this.setPosition(0, Quick.getCanvasHeight()/3*2);
+			this.setSize(Quick.width, 30);
+			this.setPosition(0, Quick.height / 3 * 2);
 			this.setSolid();
 			this.addTag("Bridge");
-		}; Bridge.prototype = Object.create(GameObject.prototype);
+		}
+	}
 
-		return Bridge;
-	})();
-
-	var River = (function () {
-
-		function River() {
-			GameObject.call(this);
+	class River extends Sprite {
+		constructor() {
+			super();
 			this.setColor("Blue");
-			this.setSize(Quick.getCanvasWidth(), 50);
-			this.setPosition(0, Quick.getCanvasHeight()-this.getHeight());
+			this.setSize(Quick.width, 50);
+			this.setBottom(Quick.bottom);
 			this.addTag("River");
-		}; River.prototype = Object.create(GameObject.prototype);
-
-		River.prototype.update = function () {
-			if (Quick.random(5)==0) {
-				var BottomY = this.getBottom();
-				this.setHeight(50 + Quick.random(4));
-				this.setBottom(BottomY);
-			}
 		}
 
-		return River;
-	})();
+		update() {
+			if (Quick.random(5) == 0) {
+				this.setHeight(50 + Quick.random(4));
+				this.setBottom(this.scene.bottom);
+			}
+		}
+	}
 
-	var Tower = (function () {
-		
-		function Tower(left) {
-			GameObject.call(this);
+	class Tower extends Sprite {
+		constructor(left) {
+			super();
+			this.left = left;
 			this.setColor("Black");
-			this.setSize(60, Quick.getCanvasHeight()/6*4);
+			this.setSize(60, Quick.height / 6 * 4);
+
 			if (left) {
-				this.setPosition(0, Quick.getCanvasHeight()/6*2);
+				this.setPosition(0, Quick.height / 6 * 2);
 				this.addTag("LeftTower");
 			} else {
-				this.setPosition(Quick.getCanvasWidth()-this.getWidth(), Quick.getCanvasHeight()/6*2);
+				this.setPosition(Quick.width - this.width, Quick.height / 6 * 2);
 				this.addTag("RightTower");
 			}
+
 			this.setSolid();
 			this.setLayerIndex(1);
-			this.left = left;
-		}; Tower.prototype = Object.create(GameObject.prototype);
-
-		Tower.prototype.drawDecor = function() {
-			var towerTop = new GameObject();
-			towerTop.setColor("Black");
-			towerTop.setSize(100);
-			towerTop.setCenterX(this.getCenterX());
-			towerTop.setBottom(this.getTop());
-			this.getScene().add(towerTop);
-			var towerTopping;
-			for (var i=0;i<3;i++) {
-				towerTopping = new GameObject();
-				towerTopping.setColor("Black");
-				towerTopping.setSize(20);
-				towerTopping.setBottom(towerTop.getTop());
-				towerTopping.setLeft((this.left) ? 30*i : Quick.getCanvasWidth()-20-(30*i));
-				this.getScene().add(towerTopping);
-			}
-			var towerWindow = new GameObject();
-			towerWindow.setColor("#450045");
-			towerWindow.setSize(20);
-			towerWindow.setCenterX(towerTop.getCenterX());
-			towerWindow.setBottom(towerTop.getCenterY());
-			this.getScene().add(towerWindow);
 		}
 
-		return Tower;
-	})();
+		drawDecor() {
+			let towerTop = new Sprite();
+			towerTop.setColor("Black");
+			towerTop.setSize(100);
+			towerTop.setCenterX(this.centerX);
+			towerTop.setBottom(this.top);
+			this.scene.add(towerTop);
+			let towerTopping;
 
-	var Flame = (function () {
+			for (let i = 0; i < 3; ++i) {
+				towerTopping = new Sprite();
+				towerTopping.setColor("Black");
+				towerTopping.setSize(20);
+				towerTopping.setBottom(towerTop.top);
+				towerTopping.setLeft((this.left) ? 30 * i : Quick.width - 20 - (30 * i));
+				this.scene.add(towerTopping);
+			}
 
-		function Flame(isTop, speed) {
-			GameObject.call(this);
+			let towerWindow = new Sprite();
+			towerWindow.setColor("#450045");
+			towerWindow.setSize(20);
+			towerWindow.setCenterX(towerTop.centerX);
+			towerWindow.setBottom(towerTop.centerY);
+			this.scene.add(towerWindow);
+		}
+	}
+
+	class Flame extends Sprite {
+		constructor(isTop, speed) {
+			super();
 			this.isTop = isTop;
-			this.setAnimation(media['flame']);
+			this.setAnimation(media["flame"]);
 			this.setSize(14, 8);
+
 			this.setPosition(
-				-Quick.random(90), 
-				Quick.getCanvasHeight()/3*2-(isTop ? 22 : 10));
+				-Quick.random(90),
+				Quick.height / 3 * 2 - (isTop ? 22 : 10));
+
 			this.setSolid();
 			this.setSpeedX(speed);
 			this.addTag("fire");
-		}; Flame.prototype = Object.create(GameObject.prototype);
+		}
 
-		Flame.prototype.onCollision = function(obj) {
+		onCollision(obj) {
 			if (obj.hasTag("RightTower")) {
-				this.getScene().flameDied(this.isTop);
+				this.scene.flameDied(this.isTop);
 				this.expire();
 			}
 		}
+	}
 
-		return Flame;
-	})();
-
-
-/*
-================================================================
-=== Castle =====================================================
-================================================================
-*/
-	var CastleScene = (function () {
-
-		function CastleScene() {
-			Scene.call(this);
+	class CastleScene extends Scene {
+		constructor() {
+			super();
 			this.lootItems = 8;
-			var background = new CastleBackground();
+			let background = new CastleBackground();
 			this.add(background);
 			player = new CastlePlayer();
 			this.add(player);
 			this.add(new Dragon());
 			this.add(new EntranceGate());
 
-			this.scoreText = new Text("level " + (score+1));
+			this.scoreText = new FontSprite("level " + (score + 1));
 			this.scoreText.setPosition(200, 10);
 			this.add(this.scoreText);
 
-			var icon = new GameObject();
-			icon.setImage(media['player_standing_right']);
+			let icon = new Sprite();
+			icon.setImage(media["player_standing_right"]);
 			icon.setPosition(382, 5);
 			icon.setSize(12, 22);
 			this.add(icon);
-			this.updateLifes();
+			this.updateLives();
 
-			for(var i=0; i<this.lootItems;i++) {
+			for (let i = 0; i < this.lootItems; ++i) {
 				this.add(new Loot());
 			}
-		}; CastleScene.prototype = Object.create(Scene.prototype);
+		}
 
-		CastleScene.prototype.getNext = function () {
+		get next() {
 			return new BridgeScene();
 		}
 
-		CastleScene.prototype.success = function () {
-			score++;
+		success() {
+			++score;
 			this.expire();
 		}
 
-		CastleScene.prototype.caughtLoot = function () {
-			this.lootItems--;
-			if (this.lootItems<=0) {
+		caughtLoot() {
+			if (--this.lootItems <= 0) {
 				this.add(new ExitGate());
 			}
 		}
 
-		CastleScene.prototype.updateLifes = function() {
-			if (this.lifesText) this.lifesText.expire();
-			this.lifesText = new Text("x " + (lifes >= 0 ? lifes : "-"));
-			this.lifesText.setPosition(400, 10);
-			this.add(this.lifesText);
+		updateLives() {
+			if (this.livesText) this.livesText.expire();
+			this.livesText = new FontSprite("x " + (lives >= 0 ? lives : "-"));
+			this.livesText.setPosition(400, 10);
+			this.add(this.livesText);
 		}
+	}
 
-		return CastleScene;
-	})();
+	// TODO: https://github.com/diogoeichert/quick/tree/master/plugins/controllable
+	const CastlePlayer = (function () {
+		const SPEED = 13;
+		const W = 12, H = 22;
 
-	var CastlePlayer = (function () {
-		
-		var SPEED = 13;
-		var W = 12, H = 22;
-		
-		function CastlePlayer() {
-			GameObject.call(this);
-			this.controller = Quick.getController();
-			this.hidden = false;
-			this.burning = false;
-			this.prevState = "";
-			this.turnedLeft = true;
-			this.prevLeft = true;
-			this.updateAnimation("standing");
-			this.setSolid();
-			this.startX = Quick.getCanvasWidth()-this.getWidth()-70;
-			this.startY = Quick.getCanvasHeight()/3*2-20;
-			this.setPosition(this.startX, this.startY);
-			this.setBoundary(Quick.getBoundary());
-		}; CastlePlayer.prototype = Object.create(GameObject.prototype);
-
-		CastlePlayer.prototype.updateAnimation = function (state) {
-			if (this.burning) return;
-
-			if (state != this.prevState || this.prevLeft != this.turnedLeft) { /* if the state changed, update animation */
-				var feetY = this.getBottom();
-				if (state == "burning") {
-					this.burning = true;
-					this.setAnimation(media['player_toasted']);
-					this.setSize(W, H);
-				} else if (state == "running") {
-					this.setAnimation(this.turnedLeft ? media['player_running_left'] : media['player_running_right']);
-					this.setSize(W, H);
-				} else {	/* just standing */
-					this.setImage(this.turnedLeft ? media['player_standing_left'] : media['player_standing_right']);
-					this.setSize(W, H);
-				}
-				this.setBottom(feetY);
+		class CastlePlayer extends Sprite {
+			constructor() {
+				super();
+				this.controller = Quick.getController();
+				this.hidden = false;
+				this.burning = false;
+				this.prevState = "";
+				this.turnedLeft = true;
+				this.prevLeft = true;
+				this.updateAnimation("standing");
+				this.setSolid();
+				this.startX = Quick.width - this.width - 70;
+				this.startY = Quick.height / 3 * 2 - 20;
+				this.setPosition(this.startX, this.startY);
 			}
-			this.prevState = state;
-			this.prevLeft = this.turnedLeft;
-		}
 
-		CastlePlayer.prototype.update = function () {
-			if (this.burning) return;
-
-			if (this.hidden) {
-				if (this.controller.keyDown(CommandEnum.LEFT) && this.getLeft() > 0) {
-					this.setVisible(true);
-					this.hidden = false;
-					this.setPosition(this.startX, this.startY);
-				}
-			} else {
-				var moved = false;
-				if (this.controller.keyDown(CommandEnum.LEFT) && this.getLeft() > 0) {
-					this.moveX(-SPEED);
-					this.turnedLeft = true;
-					moved = true;
-				} else if (this.controller.keyDown(CommandEnum.RIGHT) && this.getRight() < Quick.getCanvasWidth()) {
-					this.moveX(SPEED);
-					this.turnedLeft = false;
-					moved = true;
-				}
-				if (this.controller.keyDown(CommandEnum.UP) && this.getTop() > 0) {
-					this.moveY(-SPEED);
-					moved = true;
-				} else if (this.controller.keyDown(CommandEnum.DOWN) && this.getBottom() < Quick.getCanvasHeight()) {
-					this.moveY(SPEED);
-					moved = true;
-				}
-				this.updateAnimation(moved ? "running" : "standing");
+			init() {
+				this.setBoundary(this.scene.boundary);
 			}
-		};
 
-		CastlePlayer.prototype.onCollision = function(obj) {
-			if (this.burning) return;
+			updateAnimation(state) {
+				if (this.burning) return;
 
-			if (!this.hidden) {
-				if (obj.hasTag("Hot")) {
-					lifes--;
-					Quick.play("death");
-					this.updateAnimation("burning");
-					this.getScene().updateLifes();
+				if (state != this.prevState || this.prevLeft != this.turnedLeft) {
+					let feetY = this.bottom;
+
+					if (state == "burning") {
+						this.burning = true;
+						this.setAnimation(media["player_toasted"]);
+						this.setSize(W, H);
+					} else if (state == "running") {
+						this.setAnimation(this.turnedLeft ? media["player_running_left"] : media["player_running_right"]);
+						this.setSize(W, H);
+					} else {
+						this.setImage(this.turnedLeft ? media["player_standing_left"] : media["player_standing_right"]);
+						this.setSize(W, H);
+					}
+
+					this.setBottom(feetY);
 				}
-				if (obj.hasTag("Loot")) {
-					obj.expire();
-					this.getScene().caughtLoot();
-					Quick.play("pickup");
+
+				this.prevState = state;
+				this.prevLeft = this.turnedLeft;
+			}
+
+			update() {
+				if (this.burning) {
+					return;
 				}
-				if (obj.hasTag("ExitGate")) {
-					this.getScene().success();
-				}
-				if (obj.hasTag("EntranceGate")) {
-					this.hidden = true;
-					this.setVisible(false);
+
+				if (this.hidden) {
+					if (this.controller.keyDown(Command.LEFT) && this.left > 0) {
+						this.setVisible(true);
+						this.hidden = false;
+						this.setPosition(this.startX, this.startY);
+					}
+				} else {
+					let moved = false;
+
+					if (this.controller.keyDown(Command.LEFT) && this.left > 0) {
+						this.x -= SPEED;
+						this.turnedLeft = true;
+						moved = true;
+					} else if (this.controller.keyDown(Command.RIGHT) && this.right < Quick.width) {
+						this.x += SPEED;
+						this.turnedLeft = false;
+						moved = true;
+					}
+
+					if (this.controller.keyDown(Command.UP) && this.top > 0) {
+						this.y -= SPEED;
+						moved = true;
+					} else if (this.controller.keyDown(Command.DOWN) && this.bottom < Quick.height) {
+						this.y += SPEED;
+						moved = true;
+					}
+
+					this.updateAnimation(moved ? "running" : "standing");
 				}
 			}
-		};
 
-		CastlePlayer.prototype.onAnimationLoop = function() {
-			if (this.burning) {
-				if (lifes < 0) {
-					this.getScene().completed = true;
-					this.getScene().expire();
+			onCollision(obj) {
+				if (this.burning) {
+					return;
+				}
+
+				if (!this.hidden) {
+					if (obj.hasTag("Hot")) {
+						lives--;
+						Quick.play("death");
+						this.updateAnimation("burning");
+						this.scene.updateLives();
+					}
+
+					if (obj.hasTag("Loot")) {
+						obj.expire();
+						this.scene.caughtLoot();
+						Quick.play("pickup");
+					}
+
+					if (obj.hasTag("ExitGate")) {
+						this.scene.success();
+					}
+
+					if (obj.hasTag("EntranceGate")) {
+						this.hidden = true;
+						this.setVisible(false);
+					}
+				}
+			}
+
+			onAnimationLoop() {
+				if (!this.burning) {
+					return;
+				}
+
+				if (lives < 0) {
+					this.scene.completed = true;
+					this.scene.expire();
 				} else {
 					this.burning = false;
 					this.hidden = false;
 					this.setPosition(this.startX, this.startY);
 					this.turnedLeft = true;
-					this.updateAnimation();				
+					this.updateAnimation();
 				}
 			}
-		}
 
-		CastlePlayer.prototype.offBoundary = function(rct) {
-			this.stop();
-		};
+			offBoundary(rct) {
+				this.stop();
+			}
+		}
 
 		return CastlePlayer;
 	})();
 
-	var Dragon = (function () {
-		var SPEED = 4;
-		
-		function Dragon() {
-			GameObject.call(this);
-			this.addTag("Hot");
-			this.goingLeft = false;
-			this.prevLeft = true;
-			this.spitting = false;
-			this.updateAnimation();
-			this.setSize(120, 46);
-			this.setPosition(60, Quick.getCanvasHeight()-60);
-			this.setSolid();
-		}; Dragon.prototype = Object.create(GameObject.prototype);
+	let Dragon = (function () {
+		let SPEED = 4;
 
-		Dragon.prototype.updateAnimation = function () {
-			if (this.prevLeft != this.goingLeft) {
-				if (this.goingLeft) {
-					this.setAnimation(media['dragon_left']);
-				} else {
-					this.setAnimation(media['dragon_right']);
+		class Dragon extends Sprite {
+			constructor() {
+				super();
+				this.addTag("Hot");
+				this.goingLeft = false;
+				this.prevLeft = true;
+				this.spitting = false;
+				this.updateAnimation();
+				this.setSize(120, 46);
+				this.setPosition(60, Quick.height - 60);
+				this.setSolid();
+			}
+
+			updateAnimation() {
+				if (this.prevLeft == this.goingLeft) {
+					return;
 				}
+
+				if (this.goingLeft) {
+					this.setAnimation(media["dragon_left"]);
+				} else {
+					this.setAnimation(media["dragon_right"]);
+				}
+
 				this.prevLeft = this.goingLeft;
 			}
-		};
 
-		Dragon.prototype.onAnimationLoop = function () {
-			if (this.spitting) {
+			onAnimationLoop() {
+				if (!this.spitting) {
+					return;
+				}
+
 				this.spitting = false;
 				this.updateAnimation();
 			}
-		};
 
-		Dragon.prototype.update = function () {
-			if (player.hidden || player.burning) {	/* idle */
-				if (this.goingLeft) {
-					this.moveX(-SPEED - score)
-					if (this.getX() < 100) {
+			update() {
+				if (player.hidden || player.burning) {
+					if (this.goingLeft) {
+						this.x -= SPEED + score;
+
+						if (this.x < 100) {
+							this.goingLeft = false;
+							this.updateAnimation();
+						}
+					} else {
+						this.x += SPEED + score;
+
+						if (this.x > Quick.width - 230) {
+							this.goingLeft = true;
+							this.updateAnimation();
+						}
+					}
+				} else {	/* after the player */
+					if (this.right < player.centerX-10) {
+						this.x += SPEED + score;
 						this.goingLeft = false;
-						this.updateAnimation();
-					}
-				} else {
-					this.moveX(SPEED + score)
-					if (this.getX() > Quick.getCanvasWidth()-230) {
+					} else if (this.right > player.centerX+10) {
+						this.x -= SPEED + score;
 						this.goingLeft = true;
-						this.updateAnimation();
+					} else { /* standing still to shoot */
+						this.goingLeft = false;
 					}
-				}
-			} else {	/* after the player */
-				if (this.getRight() < player.getCenterX()-10) {
-					this.moveX(SPEED + score);
-					this.goingLeft = false;
-				} else if (this.getRight() > player.getCenterX()+10) {
-					this.moveX(-SPEED - score);
-					this.goingLeft = true;
-				} else { /* standing still to shoot */
-					this.goingLeft = false;
-				}
-				/* Shoot Fire */
-				if (Quick.random(100+(score*5))>95) {
-					this.getScene().add(
-						new DragonFireball(
-							this.goingLeft ? this.getLeft() : this.getRight(),
-							this.getCenterY()
-						)
-					);
-					if (!this.spitting) {
-						this.spitting = true;
-						this.setAnimation(this.goingLeft ? media['dragon_spit_left'] : media['dragon_spit_right']);
+
+					if (Quick.random(100 + (score * 5)) > 95) {
+						this.scene.add(
+							new DragonFireball(
+								this.goingLeft ? this.left : this.right,
+								this.centerY
+							)
+						);
+
+						if (!this.spitting) {
+							this.spitting = true;
+							this.setAnimation(this.goingLeft ? media["dragon_spit_left"] : media["dragon_spit_right"]);
+						}
 					}
 				}
 			}
-		};
+		}
 
 		return Dragon;
 	})();
 
-	var DragonFireball = (function () {
-		
-		function DragonFireball(x, y) {
-			GameObject.call(this);
+	class DragonFireball extends Sprite {
+		constructor(x, y) {
+			super();
 			this.addTag("Hot");
 			this.controller = Quick.getController();
-			this.setAnimation(media['dragon_fireball']);
+			this.setAnimation(media["dragon_fireball"]);
 			this.setSize(20, 20);
-			this.setPosition(x+5-Quick.random(16), y);
+			this.setPosition(x + 5 - Quick.random(16), y);
 			this.setSpeedY(-6);
-			this.setBoundary(Quick.getBoundary());
 			this.setSolid();
 			Quick.play("fire");
-		}; DragonFireball.prototype = Object.create(GameObject.prototype);
+		}
 
-		DragonFireball.prototype.offBoundary = function () {
-			this.expire();
-		};
+		init() {
+			this.setBoundary(this.scene.boundary);
+		}
+	}
 
-		return DragonFireball;
-	})();
-
-	var CastleBackground = (function () {
-
-		function CastleBackground() {
-			GameObject.call(this);
+	class CastleBackground extends Sprite {
+		constructor() {
+			super();
 			this.setColor("#101010");
-			this.setSize(Quick.getCanvasWidth(), Quick.getCanvasHeight());
-		}; CastleBackground.prototype = Object.create(GameObject.prototype);
+			this.setSize(Quick.width, Quick.height);
+		}
+	}
 
-		return CastleBackground;
-	})();
-
-	var EntranceGate = (function () {
-
-		function EntranceGate() {
-			GameObject.call(this);
+	class EntranceGate extends Sprite {
+		constructor() {
+			super();
 			this.addTag("EntranceGate");
-			this.setImage(media['door']);
+			this.setImage(media["door"]);
 			this.setSize(40, 45);
-			this.setPosition(Quick.getCanvasWidth()-60, Quick.getCanvasHeight()-180);
+			this.setPosition(Quick.width - 60, Quick.height - 180);
 			this.setSolid();
-		}; EntranceGate.prototype = Object.create(GameObject.prototype);
+		}
+	}
 
-		return EntranceGate;
-	})();
-
-	var ExitGate = (function () {
-
-		function ExitGate() {
-			GameObject.call(this);
+	class ExitGate extends Sprite {
+		constructor() {
+			super();
 			this.addTag("ExitGate")
 			this.setImage(document.getElementById("door"));
 			this.setSize(40, 45);
 			this.setPosition(40, 40);
 			this.setSolid();
-		}; ExitGate.prototype = Object.create(GameObject.prototype);
+		}
+	}
 
-		return ExitGate;
-	})();
-
-	var Loot = (function () {
-
-		function Loot() {
-			GameObject.call(this);
+	class Loot extends Sprite {
+		constructor() {
+			super();
 			this.addTag("Loot");
-			this.setImage(media['loot'][Quick.random(2)]);
+			this.setImage(media["loot"][Quick.random(2)]);
 			this.setSize(20, 20);
+
 			this.setPosition(
-				100 + Quick.random(Quick.getCanvasWidth()-200),
-				60 + Quick.random(Quick.getCanvasHeight()-160)
+				100 + Quick.random(Quick.width-200),
+				60 + Quick.random(Quick.height-160)
 			);
+
 			this.setSolid();
-		}; Loot.prototype = Object.create(GameObject.prototype);
+		}
+	}
 
-		return Loot;
-	})();
-
-	main();
+	Quick.setName("Dragonfire");
+	Quick.init(new BridgeScene());
 })();
