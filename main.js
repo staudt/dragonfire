@@ -772,5 +772,6 @@
 	}
 
 	Quick.setName("Dragonfire");
+	Quick.setFrameTime(30);
 	Quick.init(new BridgeScene());
 })();
